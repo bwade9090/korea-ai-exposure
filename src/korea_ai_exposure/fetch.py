@@ -7,17 +7,25 @@ Each manifest entry records which registered source a file belongs to (``source`
 
 Fetching is idempotent: a file already present with its pinned checksum is not downloaded again.
 A download whose checksum differs from the pin is refused, leaving the local file and the pin
-unchanged, unless ``--update`` is given. Downloads stream into a temporary file beside the
+unchanged, unless ``--update`` is given. ``--update`` acts only on files that are downloaded, that
+is, files that are missing or corrupt locally; add ``--refresh`` to re-download verified files as
+well and so detect upstream revisions. Downloads stream into a temporary file beside the
 destination and are moved into place only once accepted, so a failed or refused download never
-leaves a partial file.
+leaves a partial file. Empty responses, and HTML pages where data were expected (block pages,
+landing pages of moved files), are refused.
 
-TLS verification uses the operating system's trust store (``ssl.create_default_context``), so it
-also works behind a TLS-inspecting proxy whose root certificate is installed in the OS.
+Safeguards: TLS verification uses the operating system's trust store
+(``ssl.create_default_context``), which also works behind TLS-inspecting proxies whose root
+certificate is installed in the OS. Redirects are followed only to HTTPS. A custom User-Agent
+(for example ``BLS_USER_AGENT``, which carries contact details) is sent only to the pinned host.
+URLs that carry credentials, including the value of any variable in ``.env``, are refused, and
+error messages show URLs without their query strings.
 
 Usage::
 
     python -m korea_ai_exposure.fetch                     # fetch and verify every pinned file
     python -m korea_ai_exposure.fetch --source AEI-LMI    # only the files of one source
+    python -m korea_ai_exposure.fetch --refresh           # also re-check verified files upstream
     python -m korea_ai_exposure.fetch --update            # accept and re-pin changed files
     python -m korea_ai_exposure.fetch --add SOURCE URL PATH [--user-agent-env BLS_USER_AGENT]
 """
@@ -40,7 +48,7 @@ from datetime import UTC, datetime
 from pathlib import Path, PurePosixPath
 from typing import Self
 
-from dotenv import load_dotenv
+from dotenv import dotenv_values, load_dotenv
 
 from korea_ai_exposure import paths
 
@@ -49,12 +57,39 @@ DEFAULT_USER_AGENT = "korea-ai-exposure/0.1 (public-data research; python-urllib
 CHUNK_BYTES = 1 << 20
 TIMEOUT_SECONDS = 120
 LOOPBACK_HOSTS = frozenset({"127.0.0.1", "::1", "localhost"})
-CREDENTIAL_PARAMS = frozenset({"access_token", "api_key", "apikey", "key", "secret", "token"})
+CREDENTIAL_PARAMS = frozenset(
+    {
+        "access_key",
+        "access_token",
+        "api-key",
+        "api_key",
+        "apikey",
+        "authkey",
+        "client_secret",
+        "crtfc_key",
+        "key",
+        "password",
+        "registrationkey",
+        "secret",
+        "servicekey",
+        "sig",
+        "signature",
+        "token",
+        "x-amz-credential",
+        "x-amz-signature",
+    }
+)
+MIN_SECRET_LENGTH = 8
+HTML_SUFFIXES = frozenset({".htm", ".html"})
 
 _FIELDS = ("path", "source", "url", "sha256", "bytes", "retrieved_at")
+_OPTIONAL_FIELDS = ("user_agent_env",)
 _SHA256 = re.compile(r"[0-9a-f]{64}")
 _SOURCE_ID = re.compile(r"[A-Z]+(?:-[A-Z0-9]+)+")
 _TIMESTAMP = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z")
+_USER_AGENT_ENV = re.compile(r"[A-Z][A-Z0-9_]*_USER_AGENT")
+_PATH_PART = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*")
+_WINDOWS_DEVICE = re.compile(r"(?i)(?:con|prn|aux|nul|com[0-9]|lpt[0-9])")
 
 Log = Callable[[str], None]
 
@@ -76,12 +111,15 @@ class Pin:
     user_agent_env: str | None = None
 
     @classmethod
-    def from_record(cls, record: object) -> Self:
+    def from_record(cls, record: object, secrets: Collection[str] = ()) -> Self:
         if not isinstance(record, dict):
             raise FetchError(f"manifest entry is not an object: {record!r}")
         missing = [field for field in _FIELDS if field not in record]
         if missing:
             raise FetchError(f"manifest entry {record.get('path')!r} lacks {', '.join(missing)}")
+        unknown = sorted(set(record) - set(_FIELDS) - set(_OPTIONAL_FIELDS))
+        if unknown:
+            raise FetchError(f"manifest entry {record['path']!r} has unknown {', '.join(unknown)}")
         pin = cls(
             path=record["path"],
             source=record["source"],
@@ -91,7 +129,7 @@ class Pin:
             retrieved_at=record["retrieved_at"],
             user_agent_env=record.get("user_agent_env"),
         )
-        pin.validate()
+        pin.validate(secrets)
         return pin
 
     def to_record(self) -> dict[str, str | int]:
@@ -107,9 +145,10 @@ class Pin:
             record["user_agent_env"] = self.user_agent_env
         return record
 
-    def validate(self) -> None:
+    def validate(self, secrets: Collection[str] = ()) -> None:
         check_path(self.path)
-        check_url(self.url)
+        check_url(self.url, secrets)
+        check_user_agent_env(self.user_agent_env)
         if not isinstance(self.source, str) or not _SOURCE_ID.fullmatch(self.source):
             raise FetchError(f"{self.path}: malformed source ID {self.source!r}")
         if not isinstance(self.sha256, str) or not _SHA256.fullmatch(self.sha256):
@@ -120,51 +159,92 @@ class Pin:
             raise FetchError(f"{self.path}: retrieved_at must look like 2026-01-31T12:00:00Z")
 
 
+@dataclass(frozen=True)
+class Download:
+    """A completed download waiting in a temporary file beside its destination."""
+
+    tmp: Path
+    sha256: str
+    size: int
+    host: str
+
+
 def check_path(rel: object) -> PurePosixPath:
-    """Accept only a canonical relative POSIX path, which therefore stays inside ``data/raw/``."""
-    if not isinstance(rel, str):
-        raise FetchError(f"path must be a string: {rel!r}")
-    pure = PurePosixPath(rel)
-    if (
-        not pure.parts
-        or "\\" in rel
-        or ":" in rel
-        or pure.is_absolute()
-        or ".." in pure.parts
-        or rel != pure.as_posix()
-    ):
-        raise FetchError(f"unsafe or non-canonical path: {rel!r}")
-    return pure
+    """Accept only a relative path whose components are portable between Linux and Windows:
+    letters, digits, '.', '_' and '-', starting with a letter or digit, not ending in '.', and
+    not a Windows device name. Such a path cannot leave ``data/raw/``."""
+    if not isinstance(rel, str) or not all(_portable(part) for part in rel.split("/")):
+        raise FetchError(f"unsafe or non-portable path: {rel!r}")
+    return PurePosixPath(rel)
 
 
-def check_url(url: object) -> None:
-    """Accept HTTPS URLs (plain HTTP only for loopback hosts) that carry no credentials."""
+def check_url(url: object, secrets: Collection[str] = ()) -> None:
+    """Accept an HTTPS URL (plain HTTP only for loopback hosts) that carries no credentials: no
+    user information, no credential-like query or fragment parameter, and none of ``secrets``."""
     if not isinstance(url, str):
-        raise FetchError(f"url must be a string: {url!r}")
-    parts = urllib.parse.urlsplit(url)
+        raise FetchError("url must be a string")
+    try:
+        parts = urllib.parse.urlsplit(url)
+        host = parts.hostname
+    except ValueError:
+        raise FetchError("malformed URL") from None
     if parts.username or parts.password:
-        raise FetchError("URL carries credentials; never pin credentials")
-    names = {name.lower() for name, _ in urllib.parse.parse_qsl(parts.query, True)}
+        raise FetchError("URL carries user credentials; never pin credentials")
+    names = {
+        name.lower()
+        for component in (parts.query, parts.fragment)
+        for name, _ in urllib.parse.parse_qsl(component, keep_blank_values=True)
+    }
     if names & CREDENTIAL_PARAMS:
-        raise FetchError("URL carries a credential in its query string; never pin credentials")
-    if parts.scheme == "https" and parts.hostname:
-        return
-    if parts.scheme == "http" and parts.hostname in LOOPBACK_HOSTS:
-        return
-    raise FetchError(f"not an HTTPS URL: {url!r}")
+        raise FetchError("URL carries a credential parameter; never pin credentials")
+    decoded = urllib.parse.unquote(url)
+    if any(secret in url or secret in decoded for secret in secrets):
+        raise FetchError("URL contains the value of a variable in .env; never pin credentials")
+    if not _allowed_target(parts.scheme, host):
+        raise FetchError(f"not an HTTPS URL: {redact(url)}")
+
+
+def check_user_agent_env(name: object) -> None:
+    """A pin may name only a variable that holds a User-Agent, such as ``BLS_USER_AGENT``, so a
+    manifest entry cannot send another secret from the environment to a server."""
+    if name is not None and (not isinstance(name, str) or not _USER_AGENT_ENV.fullmatch(name)):
+        raise FetchError(f"user_agent_env must name a *_USER_AGENT variable, not {name!r}")
+
+
+def redact(url: str) -> str:
+    """The URL without user information, query, or fragment, for messages."""
+    try:
+        parts = urllib.parse.urlsplit(url)
+        netloc = parts.hostname or ""
+        if ":" in netloc:
+            netloc = f"[{netloc}]"
+        if parts.port:
+            netloc = f"{netloc}:{parts.port}"
+    except ValueError:
+        return "<malformed URL>"
+    return urllib.parse.urlunsplit((parts.scheme, netloc, parts.path, "", ""))
+
+
+def env_secrets(env_file: Path) -> frozenset[str]:
+    """Values in ``env_file`` long enough to be credentials; they must never appear in a URL."""
+    values = dotenv_values(env_file) if env_file.is_file() else {}
+    return frozenset(v for v in values.values() if v and len(v) >= MIN_SECRET_LENGTH)
 
 
 def registered_sources(registry: Path) -> frozenset[str]:
-    """Source IDs in the first column of the tables in ``docs/DATA_SOURCES.md``."""
+    """Source IDs in the first column of the tables in ``docs/DATA_SOURCES.md``. Tables under the
+    'Prior art' heading list publications, not data sources, and are not counted."""
     ids = set()
     for line in registry.read_text(encoding="utf-8").splitlines():
+        if line.lower().startswith("## prior art"):
+            break
         cells = line.split("|")
         if line.startswith("|") and len(cells) > 2 and _SOURCE_ID.fullmatch(cells[1].strip()):
             ids.add(cells[1].strip())
     return frozenset(ids)
 
 
-def load_manifest(manifest: Path) -> list[Pin]:
+def load_manifest(manifest: Path, secrets: Collection[str] = ()) -> list[Pin]:
     """Read and validate the manifest. A missing file counts as an empty manifest."""
     if not manifest.exists():
         return []
@@ -176,12 +256,12 @@ def load_manifest(manifest: Path) -> list[Pin]:
         raise FetchError(f"{manifest}: expected an object with schema_version {SCHEMA_VERSION}")
     if not isinstance(data.get("files"), list):
         raise FetchError(f"{manifest}: 'files' must be a list")
-    pins = [Pin.from_record(record) for record in data["files"]]
+    pins = [Pin.from_record(record, secrets) for record in data["files"]]
     seen: set[str] = set()
     for pin in pins:
-        if pin.path in seen:
-            raise FetchError(f"{manifest}: duplicate path {pin.path}")
-        seen.add(pin.path)
+        if pin.path.casefold() in seen:
+            raise FetchError(f"{manifest}: duplicate path {pin.path} (case-insensitive)")
+        seen.add(pin.path.casefold())
     return pins
 
 
@@ -210,22 +290,30 @@ def utc_now() -> str:
     return datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+def tls_context() -> ssl.SSLContext:
+    """Certificate and hostname verification against the operating system's trust store."""
+    return ssl.create_default_context()
+
+
 def fetch(
     pins: Sequence[Pin],
     raw_dir: Path,
     *,
     update: bool = False,
+    refresh: bool = False,
     now: Callable[[], str] = utc_now,
     log: Log = print,
 ) -> tuple[list[Pin], list[str]]:
     """Make each pinned file present and verified. Return the pins, re-pinned where accepted,
-    and one message per file that failed."""
+    and one message per file that failed; a failure does not stop the other files."""
     result: list[Pin] = []
     errors: list[str] = []
     for pin in pins:
         try:
-            result.append(_fetch_one(pin, raw_dir, update=update, now=now, log=log))
-        except FetchError as exc:
+            result.append(
+                _fetch_one(pin, raw_dir, update=update, refresh=refresh, now=now, log=log)
+            )
+        except (FetchError, OSError) as exc:
             errors.append(str(exc))
             result.append(pin)
     return result, errors
@@ -241,45 +329,69 @@ def add(
     registered: Collection[str],
     user_agent_env: str | None = None,
     update: bool = False,
+    secrets: Collection[str] = (),
     now: Callable[[], str] = utc_now,
     log: Log = print,
 ) -> list[Pin]:
     """Download a new file and return the pins with its entry added (or replaced, with
-    ``update``)."""
+    ``update``). Everything is checked before the first request is made."""
     if source not in registered:
         raise FetchError(f"source {source!r} is not registered in docs/DATA_SOURCES.md")
-    check_url(url)
+    check_url(url, secrets)
     dest = _destination(raw_dir, path)
-    by_path = {pin.path: pin for pin in pins}
-    if path in by_path and not update:
-        raise FetchError(f"{path} is already pinned; pass --update to re-pin it")
-    tmp, sha256, size = _download(url, dest, _user_agent(user_agent_env))
-    os.replace(tmp, dest)
-    by_path[path] = Pin(path, source, url, sha256, size, now(), user_agent_env)
-    log(f"pinned    {path} ({size:,} bytes, sha256 {sha256[:12]}...)")
+    by_path = {pin.path.casefold(): pin for pin in pins}
+    previous = by_path.get(path.casefold())
+    if previous and not update:
+        raise FetchError(f"{previous.path} is already pinned; pass --update to re-pin it")
+    if user_agent_env is None and previous:
+        user_agent_env = previous.user_agent_env
+    check_user_agent_env(user_agent_env)
+    got = _download(url, dest, _user_agent(user_agent_env))
+    _place(got.tmp, dest)
+    by_path[path.casefold()] = Pin(path, source, url, got.sha256, got.size, now(), user_agent_env)
+    log(f"pinned    {path} ({got.size:,} bytes, sha256 {got.sha256[:12]}..., from {got.host})")
     return list(by_path.values())
 
 
-def _fetch_one(pin: Pin, raw_dir: Path, *, update: bool, now: Callable[[], str], log: Log) -> Pin:
+def _fetch_one(
+    pin: Pin, raw_dir: Path, *, update: bool, refresh: bool, now: Callable[[], str], log: Log
+) -> Pin:
     dest = _destination(raw_dir, pin.path)
-    if _matches(dest, pin):
+    verified = _matches(dest, pin)
+    if verified and not refresh:
         log(f"verified  {pin.path}")
         return pin
-    tmp, sha256, size = _download(pin.url, dest, _user_agent(pin.user_agent_env))
-    if (sha256, size) == (pin.sha256, pin.size):
-        os.replace(tmp, dest)
-        log(f"fetched   {pin.path} ({size:,} bytes)")
+    got = _download(pin.url, dest, _user_agent(pin.user_agent_env))
+    if (got.sha256, got.size) == (pin.sha256, pin.size):
+        if verified:
+            got.tmp.unlink()
+            log(f"unchanged {pin.path}")
+        else:
+            _place(got.tmp, dest)
+            log(f"fetched   {pin.path} ({got.size:,} bytes)")
         return pin
     if update:
-        os.replace(tmp, dest)
-        log(f"re-pinned {pin.path} (sha256 {pin.sha256[:12]}... -> {sha256[:12]}...)")
-        return replace(pin, sha256=sha256, size=size, retrieved_at=now())
-    tmp.unlink()
+        _place(got.tmp, dest)
+        log(f"re-pinned {pin.path} (sha256 {pin.sha256[:12]}... -> {got.sha256[:12]}...)")
+        return replace(pin, sha256=got.sha256, size=got.size, retrieved_at=now())
+    got.tmp.unlink()
     raise FetchError(
         f"{pin.path}: the upstream file differs from its pin (pinned {pin.size:,} bytes, sha256 "
-        f"{pin.sha256[:12]}...; downloaded {size:,} bytes, sha256 {sha256[:12]}...). The local "
-        "file and the pin are unchanged; rerun with --update to accept the new file."
+        f"{pin.sha256[:12]}...; downloaded {got.size:,} bytes, sha256 {got.sha256[:12]}...). The "
+        "local file and the pin are unchanged; rerun with --update to accept the new file."
     )
+
+
+def _portable(part: str) -> bool:
+    return (
+        bool(_PATH_PART.fullmatch(part))
+        and not part.endswith(".")
+        and not _WINDOWS_DEVICE.fullmatch(part.split(".")[0])
+    )
+
+
+def _allowed_target(scheme: str, host: str | None) -> bool:
+    return bool(host) and (scheme == "https" or (scheme == "http" and host in LOOPBACK_HOSTS))
 
 
 def _destination(raw_dir: Path, rel: str) -> Path:
@@ -294,6 +406,16 @@ def _matches(dest: Path, pin: Pin) -> bool:
     return dest.is_file() and dest.stat().st_size == pin.size and sha256_file(dest) == pin.sha256
 
 
+def _place(tmp: Path, dest: Path) -> None:
+    try:
+        os.replace(tmp, dest)
+    except OSError as exc:
+        tmp.unlink(missing_ok=True)
+        raise FetchError(
+            f"cannot write {dest}: {exc.strerror or exc}; close any program using it and rerun"
+        ) from None
+
+
 def _user_agent(env_var: str | None) -> str:
     if not env_var:
         return DEFAULT_USER_AGENT
@@ -303,39 +425,92 @@ def _user_agent(env_var: str | None) -> str:
     return value
 
 
-def _download(url: str, dest: Path, user_agent: str) -> tuple[Path, str, int]:
-    """Stream ``url`` into a temporary file beside ``dest``. Return (temporary file, SHA-256,
-    bytes); the caller moves the file into place or deletes it."""
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    handle, name = tempfile.mkstemp(dir=dest.parent, prefix=f".{dest.name}.", suffix=".part")
-    tmp = Path(name)
-    digest = hashlib.sha256()
-    size = 0
-    done = False
+def _looks_like_html(head: bytes) -> bool:
+    start = head.removeprefix(b"\xef\xbb\xbf").lstrip().lower()
+    return start.startswith((b"<!doctype html", b"<html"))
+
+
+class _StrictRedirect(urllib.request.HTTPRedirectHandler):
+    """Follow redirects only to HTTPS (plain HTTP only between loopback hosts), and send a custom
+    User-Agent only to the pinned host."""
+
+    def __init__(self, origin_host: str | None) -> None:
+        super().__init__()
+        self.origin_host = origin_host
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        target = urllib.parse.urlsplit(newurl)
+        if not _allowed_target(target.scheme, target.hostname):
+            raise urllib.error.HTTPError(
+                req.full_url,
+                code,
+                f"refused redirect to {target.scheme}://{target.hostname}",
+                headers,
+                fp,
+            )
+        new = super().redirect_request(req, fp, code, msg, headers, newurl)
+        if new is not None and target.hostname != self.origin_host:
+            new.remove_header("User-agent")
+            new.add_header("User-Agent", DEFAULT_USER_AGENT)
+        return new
+
+
+def _download(url: str, dest: Path, user_agent: str) -> Download:
+    """Stream ``url`` into a temporary file beside ``dest``; the caller moves it into place or
+    deletes it."""
+    opener = urllib.request.build_opener(
+        urllib.request.HTTPSHandler(context=tls_context()),
+        _StrictRedirect(urllib.parse.urlsplit(url).hostname),
+    )
     request = urllib.request.Request(url, headers={"User-Agent": user_agent})
-    context = ssl.create_default_context()
+    tmp: Path | None = None
+    done = False
     try:
-        with (
-            os.fdopen(handle, "wb") as out,
-            urllib.request.urlopen(request, timeout=TIMEOUT_SECONDS, context=context) as response,
-        ):
-            announced = response.headers.get("Content-Length")
-            while chunk := response.read(CHUNK_BYTES):
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        handle, name = tempfile.mkstemp(dir=dest.parent, prefix=f".{dest.name}.", suffix=".part")
+        tmp = Path(name)
+        digest = hashlib.sha256()
+        size = 0
+        head = b""
+        with os.fdopen(handle, "wb") as out, opener.open(request, timeout=TIMEOUT_SECONDS) as resp:
+            host = urllib.parse.urlsplit(resp.geturl()).hostname or ""
+            expected = _expected_length(resp.headers)
+            while chunk := resp.read(CHUNK_BYTES):
+                if len(head) < 512:
+                    head += chunk[: 512 - len(head)]
                 out.write(chunk)
                 digest.update(chunk)
                 size += len(chunk)
-        if announced is not None and announced.isdigit() and int(announced) != size:
-            raise FetchError(f"{url}: received {size:,} bytes; the server announced {announced}")
+        if expected is not None and expected != size:
+            raise FetchError(
+                f"{redact(url)}: received {size:,} bytes; the server announced {expected:,}"
+            )
+        if size == 0:
+            raise FetchError(f"{redact(url)}: the response is empty")
+        if _looks_like_html(head) and dest.suffix.lower() not in HTML_SUFFIXES:
+            raise FetchError(
+                f"{redact(url)}: the response is an HTML page, not the expected file (a block "
+                "page, a login page, or a moved file?)"
+            )
         done = True
     except urllib.error.HTTPError as exc:
         exc.close()
-        raise FetchError(f"{url}: HTTP {exc.code} {exc.reason}") from None
+        raise FetchError(f"{redact(url)}: HTTP {exc.code} {exc.reason}") from None
     except (OSError, http.client.HTTPException) as exc:
-        raise FetchError(f"{url}: {exc}") from None
+        raise FetchError(f"{redact(url)}: {exc}") from None
     finally:
-        if not done:
+        if not done and tmp is not None:
             tmp.unlink(missing_ok=True)
-    return tmp, digest.hexdigest(), size
+    return Download(tmp, digest.hexdigest(), size, host)
+
+
+def _expected_length(headers: http.client.HTTPMessage) -> int | None:
+    if "chunked" in headers.get("Transfer-Encoding", "").lower():
+        return None
+    announced = headers.get("Content-Length")
+    if announced and announced.isascii() and announced.isdigit():
+        return int(announced)
+    return None
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -361,9 +536,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="fetch only the files of this source ID (repeatable)",
     )
     parser.add_argument(
+        "--refresh",
+        action="store_true",
+        help="re-download files that already verify, to detect upstream revisions",
+    )
+    parser.add_argument(
         "--update",
         action="store_true",
-        help="accept upstream files whose checksum changed, and re-pin them",
+        help="accept downloaded files whose checksum changed, and re-pin them; it acts only on "
+        "files that are downloaded (missing or corrupt ones, or all with --refresh)",
     )
     parser.add_argument("--manifest", type=Path, default=paths.MANIFEST, help=argparse.SUPPRESS)
     parser.add_argument("--raw-dir", type=Path, default=paths.RAW, help=argparse.SUPPRESS)
@@ -374,13 +555,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.user_agent_env and not args.add:
         parser.error("--user-agent-env requires --add")
-    if args.add and args.source:
-        parser.error("--source cannot be combined with --add")
+    if args.add and (args.source or args.refresh):
+        parser.error("--source and --refresh cannot be combined with --add")
     load_dotenv(args.env_file)
 
     errors: list[str] = []
     try:
-        pins = load_manifest(args.manifest)
+        secrets = env_secrets(args.env_file)
+        pins = load_manifest(args.manifest, secrets)
         if args.add:
             source, url, path = args.add
             pins = add(
@@ -392,6 +574,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 registered=registered_sources(args.registry),
                 user_agent_env=args.user_agent_env,
                 update=args.update,
+                secrets=secrets,
             )
             save_manifest(args.manifest, pins)
             return 0
@@ -401,11 +584,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         if not selected:
             print(f"No files registered in {args.manifest.name}; nothing to fetch.")
             return 0
-        fetched, errors = fetch(selected, args.raw_dir, update=args.update)
+        fetched, errors = fetch(selected, args.raw_dir, update=args.update, refresh=args.refresh)
         merged = {pin.path: pin for pin in pins} | {pin.path: pin for pin in fetched}
         if list(merged.values()) != pins:
             save_manifest(args.manifest, merged.values())
-    except FetchError as exc:
+    except (FetchError, OSError) as exc:
         errors.append(str(exc))
     for error in errors:
         print(f"error: {error}", file=sys.stderr)
