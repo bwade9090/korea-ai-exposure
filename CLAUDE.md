@@ -98,7 +98,8 @@ Ask the owner first:
 - Public sources only. Register each source in `docs/DATA_SOURCES.md` (URL, version, access,
   license, attribution) before code depends on it.
 - Pin downloads in `data/manifest.json` (URL, SHA-256, bytes, retrieval time). Fetchers verify
-  checksums and are idempotent.
+  checksums and are idempotent. Pin Hugging Face URLs to a commit hash, not `main`. Never put
+  credentials in a pinned URL. TLS verification uses the OS trust store and is never disabled.
 - Korean region codes are a known trap. ISO 3166-2:KR uses KR-49 for Jeju and KR-50 for Sejong;
   Korean legal-dong province codes use 50 for Jeju and 36 for Sejong. ISO kept KR-42 (Gangwon) and
   KR-45 (Jeonbuk) after their legal-dong codes changed to 51 (2023) and 52 (2024). Build the
@@ -113,16 +114,21 @@ Ask the owner first:
 
 ## Commands
 
-Phase 0 creates these; keep the list current.
+Phase 0 created these; keep the list current.
 
 | Command | Purpose |
 | --- | --- |
-| `make setup` | Create `.venv` (Python 3.12) and install pinned requirements |
+| `make setup` | Create `.venv` (Python 3.12) and install pinned requirements; `PYTHON=...` picks the interpreter |
+| `make lock` | Re-pin `requirements.txt` from `requirements.in` (pip-tools, with hashes) |
 | `make check` | `ruff check`, `ruff format --check`, offline `pytest` |
-| `make fetch` | Download and checksum registered public sources |
-| `make build` | Canonical tables in `data/interim/` and `data/processed/` |
-| `make figures`, `make facts`, `make brief` | Figures, facts sheet, rendered brief |
+| `make fetch` | Download and checksum the files pinned in `data/manifest.json` |
+| `make build` | Canonical tables in `data/interim/` and `data/processed/` (placeholder until Phase 2) |
+| `make figures`, `make facts`, `make brief` | Figures, facts sheet, rendered brief (placeholders until Phases 3–6) |
 | `make all` | fetch → build → figures → facts → brief |
+
+Recipes need GNU Make and a POSIX shell (Git Bash on Windows). Where make is missing, run the
+recipe commands directly with `.venv/Scripts/python.exe` (Windows) or `.venv/bin/python`. Register
+a download with `python -m korea_ai_exposure.fetch --add SOURCE-ID URL PATH` (`data/README.md`).
 
 ## Conventions
 

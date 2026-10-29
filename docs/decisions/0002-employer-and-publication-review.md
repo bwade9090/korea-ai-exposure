@@ -1,6 +1,7 @@
 # ADR 0002 — Employer and publication review
 
-- Status: proposed, 2026-10-29. Owner decision required before any public release.
+- Status: proposed, 2026-10-29; amended 2026-10-29 (repository visibility, below). The review in
+  items 1–5 is still pending and is required before any public release of findings.
 - Decider: Hyungbae Cho
 
 ## Context
@@ -12,7 +13,8 @@ activities.
 
 ## Decision
 
-The repository stays private, and nothing from it is shared externally, until the owner has:
+The repository stays private (superseded for the repository itself by the amendment below), and
+nothing from it is shared externally, until the owner has:
 
 1. checked the employer's rules on external publications and outside activities, and obtained any
    required clearance;
@@ -23,3 +25,13 @@ The repository stays private, and nothing from it is shared externally, until th
 5. decided whether the README names the employer.
 
 Record the outcome here with a date, then change the status to accepted.
+
+## Amendment — 2026-10-29: repository visibility
+
+The GitHub repository was already public when Phase 0 started. The owner decided to keep it
+public. Consequences:
+
+- Every push publishes its commits. The hard stops in `CLAUDE.md` (no restricted or confidential
+  data, no secrets) therefore apply to every commit, not only to releases.
+- Items 1–5 still apply before the brief, its findings, or its figures are released, presented,
+  or promoted (Checkpoint C).

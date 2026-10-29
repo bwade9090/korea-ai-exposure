@@ -21,6 +21,20 @@ downloaded by scripts and are not stored in this repository.
 - Sources, versions, and licenses: [`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md)
 - Plan: [`docs/PLAN.md`](docs/PLAN.md)
 
+## Development
+
+Requires Python 3.12, GNU Make, and a POSIX shell (Git Bash on Windows).
+
+```sh
+make setup   # create .venv with the pinned, hash-checked environment
+make check   # ruff lint, ruff format check, offline tests
+make fetch   # download the pinned public files into data/raw/ and verify their checksums
+```
+
+If `make setup` cannot find Python 3.12, pass the interpreter: `make setup PYTHON=/path/to/python3.12`.
+Copy `.env.example` to `.env` for the KOSIS API key and the BLS User-Agent; `.env` is never
+committed. See [`data/README.md`](data/README.md) for how downloads are pinned.
+
 ## Attribution and disclaimer
 
 This project uses data from the Anthropic Economic Index (Anthropic; CC-BY). It is an independent

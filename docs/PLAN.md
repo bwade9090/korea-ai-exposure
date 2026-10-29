@@ -2,7 +2,7 @@
 
 - Project: korea-ai-exposure
 - Owner: Hyungbae Cho
-- Status: proposed, 2026-10-29. Approval is recorded in `docs/PROJECT_STATUS.md`.
+- Status: approved by the owner, 2026-10-29 (recorded in `docs/PROJECT_STATUS.md`).
 
 ## 1. Objective
 
