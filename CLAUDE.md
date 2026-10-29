@@ -127,8 +127,10 @@ Phase 0 created these; keep the list current.
 | `make all` | fetch → build → figures → facts → brief |
 
 Recipes need GNU Make and a POSIX shell (Git Bash on Windows). Where make is missing, run the
-recipe commands directly with `.venv/Scripts/python.exe` (Windows) or `.venv/bin/python`. Register
-a download with `python -m korea_ai_exposure.fetch --add SOURCE-ID URL PATH` (`data/README.md`).
+recipe commands directly; on Windows `make check` is `.venv/Scripts/python -m ruff check .`,
+`.venv/Scripts/python -m ruff format --check .`, `.venv/Scripts/python -m pytest`. CI runs the
+checks on Linux (with make) and on Windows (without). Register a download with
+`python -m korea_ai_exposure.fetch --add SOURCE-ID URL PATH` (`data/README.md`).
 
 ## Conventions
 

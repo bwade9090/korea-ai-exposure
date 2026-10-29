@@ -18,16 +18,27 @@ Then download and pin the file:
 .venv/bin/python -m korea_ai_exposure.fetch --add SOURCE-ID URL path/under/raw       # Linux, macOS
 ```
 
-Add `--user-agent-env BLS_USER_AGENT` for bls.gov files.
+Add `--user-agent-env BLS_USER_AGENT` for bls.gov files. Local paths use letters, digits, `.`,
+`_` and `-` only, so that they work on both Windows and Linux.
 
-`make fetch` downloads every pinned file that is missing, verifies its SHA-256 and size, and refuses
-a file that changed upstream; rerun with `--update` only when the change is intended, and record
-why in `docs/PROJECT_STATUS.md`.
+## Fetching and upstream changes
 
-Rules:
+- `make fetch` downloads every pinned file that is missing or corrupt and verifies its SHA-256 and
+  size. Files that already verify are not downloaded again.
+- A downloaded file that differs from its pin is refused; the local file and the pin stay as they
+  were. Rerun with `--update` to accept it, and record why in `docs/PROJECT_STATUS.md`.
+- `--update` acts only on files that are downloaded. To check files that already verify against
+  upstream, add `--refresh` (with `--update` to accept the changes it finds).
+- Empty responses, and HTML pages where a data file was expected (block pages, login pages,
+  moved files), are refused.
+
+## Rules
 
 - Pin immutable URLs where the host supports them. For Hugging Face, use a commit hash in place of
   `main` (`.../resolve/<commit>/...`).
-- Never put credentials in a pinned URL. The fetcher rejects query parameters such as `apiKey`,
-  `key`, and `token`.
-- TLS verification uses the operating system's trust store and is never disabled.
+- Never put credentials in a pinned URL. The fetcher refuses URLs with credential parameters
+  (`apiKey`, `serviceKey`, `token`, ...) or containing the value of any variable in `.env`, and
+  error messages omit query strings. Keyed APIs such as KOSIS need their own fetch path that adds
+  the key at request time.
+- TLS verification uses the operating system's trust store and is never disabled. Redirects are
+  followed only to HTTPS, and a custom User-Agent is sent only to the pinned host.
