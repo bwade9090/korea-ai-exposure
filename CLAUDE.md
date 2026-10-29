@@ -108,7 +108,7 @@ Ask the owner first:
   without an explicit crosswalk.
 - Derived data committed in `data/processed/` carry source attribution. Anything derived from
   microdata follows the source's disclosure terms and a minimum-cell rule set in an ADR.
-- BLS rejects anonymous scripted downloads. Read the User-Agent from `BLS_USER_AGENT` in `.env`;
+- BLS may block scripted downloads that carry no contact information. Read the User-Agent from `BLS_USER_AGENT` in `.env`;
   if still blocked, ask the owner to download into `data/manual/`.
 
 ## Commands
