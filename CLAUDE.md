@@ -16,9 +16,10 @@ observed usage compares with occupational exposure; it does not repeat the expos
 
 ## Current checkpoint
 
-- Phase: **0 — bootstrap**, not started. `docs/PLAN.md` is proposed. The owner's instruction to
-  start Phase 0 counts as plan approval; record it in `docs/PROJECT_STATUS.md`.
-- Next unit: Phase 0, then the Phase 1 source-verification spike, which ends at **Checkpoint A**.
+- Phase: **Checkpoint A**. Phases 0 and 1 are complete (plan approved 2026-10-29). The owner's
+  Checkpoint A decisions are pending: `docs/PROJECT_STATUS.md` lists them, with proposed
+  ADRs 0003–0007.
+- Next unit: once the decisions are recorded, Phase 2 (AEI ingestion and replication).
 - Authority files, in order:
   1. `docs/PLAN.md` — scope, measures, phases, acceptance criteria.
   2. `docs/PROJECT_STATUS.md` — current state, next action, blockers, checkpoint decisions.

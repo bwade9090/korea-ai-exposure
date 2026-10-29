@@ -49,7 +49,7 @@ May 2026.
 | --- | --- |
 | Korean regions with published usage | All 17 (KR-11 … KR-50) in releases 2026-01-15, 2026-03-24, 2026-06-26 |
 | Korea's share of global Claude.ai conversations | 3.06%; 2.91%; 3.19%; 3.24% |
-| Korea's AUI | 3.92 (Apr 2026); 3.78 (May 2026), rank 14 of 121 countries with a published index |
+| Korea's AUI | 3.92 (Apr 2026; tied with Norway at rank 9–10 of 114); 3.78 (May 2026; rank 14 of 121 countries with a published index) |
 | Korean conversations in the sample | 30,618; 29,075 (counts are not published in release 2026-06-26) |
 | Regional allocation | Regional counts sum exactly to the national count in both raw releases |
 | Smallest regional counts | 175 (Ulsan, Nov 2025); 174 (Jeju, Feb 2026) |
@@ -237,7 +237,7 @@ approve peer sets (ADR); approve Phase 2.
 - 2.4 Replication tests, marked `data`. Tolerances: ±0.05 for indices, ±0.1 pp for shares, exact
   for ranks.
   - Korea AUI 3.73, rank 5 (August 2025; September 2025 report).
-  - Korea rank 7 of 116 (November 2025; as reported from the January 2026 report).
+  - Korea AUI 3.12, rank 7 of 116 (November 2025; January 2026 online appendix, Fig. 3).
   - Korea AUI above 3.5 (February 2026; Anthropic's May 2026 announcement).
   - Australia: 1.6% share, rank 11; AUI 4.1, rank 7 (February 2026; Australia brief).
   - India: 5.8% share, rank 2 (November 2025; India brief).
@@ -380,19 +380,23 @@ Brief outline (headings only; the owner writes the text):
 
 ## References
 
-Citations to verify in Phase 1.7.
+Verified in Phase 1.7; summaries and further prior art in `docs/discovery/02_prior_art.md`.
 
 - Anthropic Economic Index reports and data. Hugging Face `Anthropic/EconomicIndex`; reports of
   September 2025, January 2026, March 2026, and June 2026.
 - Appel, R. (2026). India Country Brief: The Anthropic Economic Index. Anthropic, 16 February 2026.
 - McCrory, P. (2026). How Australia Uses Claude: Findings from the Anthropic Economic Index.
   Anthropic, 31 March 2026.
-- Massenkoff, M., and McCrory, P. (2026). Research on labor market impacts and observed exposure.
-  Anthropic, 5 March 2026 (title to confirm).
-- 한국은행 조사국 (2026). AI와 지역 노동시장: 지역간 격차 확대 위험과 새로운 기회. BOK 이슈노트,
-  2026년 9월 15일 (number and authors to confirm).
-- 한국은행 (2025). AI와 한국경제. BOK 이슈노트 제2025-2호.
+- McCrory, P. (2026). How Canada Uses Claude. Anthropic, 14 July 2026.
+- Massenkoff, M., and McCrory, P. (2026). Labor market impacts of AI: A new measure and early
+  evidence. Anthropic, 5 March 2026.
+- 김보성·정민수·정유정·장수빈 (2026). AI와 지역 노동시장 - 지역간 격차 확대 위험과 새로운 기회.
+  BOK 이슈노트 제2026-25호, 한국은행 조사국, 2026년 9월 15일.
+- 오삼일·이수민·이하민·장수정·Zexi Sun·Xin Cindy Xu (2025). AI와 한국경제. BOK 이슈노트
+  제2025-2호, 2025년 2월 10일.
+- 송하윤·이병준 (2026). 주요국의 AI 사용 실태와 한국의 현황. KIEP 세계경제 포커스 9(4),
+  2026년 1월 29일.
 - Eloundou, T., Manning, S., Mishkin, P., and Rock, D. (2024). GPTs are GPTs: Labor market impact
-  potential of LLMs. Science.
+  potential of LLMs. Science 384(6702): 1306–1308.
 - Gmyrek, P., et al. (2025). Generative AI and Jobs: A Refined Global Index of Occupational
   Exposure. ILO Working Paper 140.
