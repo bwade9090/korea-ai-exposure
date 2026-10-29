@@ -1,0 +1,20 @@
+# Environment for korea-ai-exposure. Compile with `make lock`; install with `make setup`.
+
+# Data handling
+numpy
+pandas
+pyarrow
+openpyxl
+xlrd
+
+# Figures
+matplotlib
+
+# Configuration
+python-dotenv
+
+# Development and packaging
+pip-tools
+pytest
+ruff
+setuptools

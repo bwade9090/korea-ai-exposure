@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "korea-ai-exposure"
+version = "0.1.0"
+description = "AI usage and AI-exposed work across Korea's 17 regions, from public data"
+readme = "README.md"
+requires-python = ">=3.12"
+authors = [{ name = "Hyungbae Cho" }]
+# The environment is pinned in requirements.txt, compiled from requirements.in with pip-tools.
+dependencies = []
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["B", "E", "F", "I", "RUF", "SIM", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = ["--strict-markers", "-ra"]
+markers = [
+    "data(*paths): needs downloaded files (paths relative to the repository root); skipped when any is absent",
+]
