@@ -7,7 +7,7 @@ name = "korea-ai-exposure"
 version = "0.1.0"
 description = "AI usage and AI-exposed work across Korea's 17 regions, from public data"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.12,<3.13"
 authors = [{ name = "Hyungbae Cho" }]
 # The environment is pinned in requirements.txt, compiled from requirements.in with pip-tools.
 dependencies = []
@@ -21,6 +21,11 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["B", "E", "F", "I", "RUF", "SIM", "UP"]
+
+[tool.ruff.format]
+# ruff formats Python code blocks inside Markdown by default; docs and the owner's brief are
+# left as written.
+exclude = ["*.md"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -1,0 +1,10 @@
+# Store text with LF line endings and check it out with LF everywhere, so committed artifacts
+# (manifest, processed tables, facts, rendered brief) have the same bytes on Windows and Linux.
+* text=auto eol=lf
+
+*.png binary
+*.pdf binary
+*.parquet binary
+*.xls binary
+*.xlsx binary
+*.zip binary

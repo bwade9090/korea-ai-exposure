@@ -14,6 +14,9 @@ matplotlib
 python-dotenv
 
 # Development and packaging
+# colorama is needed on Windows only (by pytest and build); pin it explicitly so that a lock
+# compiled on Linux or macOS still installs on Windows.
+colorama
 pip-tools
 pytest
 ruff
