@@ -4,7 +4,8 @@ recomputed from the pinned files, each on the basis of the published value (ADR 
 Tolerances (PLAN 2.4): ±0.05 for indices, ±0.1 percentage point for published shares, exact for
 ranks and counts. Values in PLAN §3 were read from these same files, so they must match at the
 precision they were recorded with. Values published to one decimal are checked on rank, and the
-level is reported in the note.
+level is reported in the note. Every check has a status: pass, fail, or not run (optional
+targets whose inputs are not pinned yet).
 
 Run ``python -m korea_ai_exposure.replication`` for a Markdown table of the results.
 """
@@ -22,6 +23,9 @@ EN_DASH = "\N{EN DASH}"  # separates rank ranges (ties), as in the publications
 CAPITAL_REGION = ("KR-11", "KR-41", "KR-28")  # Seoul, Gyeonggi, Incheon
 WEEKLY = {"2026-01-15": "Nov 2025", "2026-03-24": "Feb 2026"}
 MONTHLY = {"2026-04-01": "Apr 2026", "2026-05-01": "May 2026"}
+STATUSES = ("pass", "fail", "not run")
+AUSTRALIA_STATES = "Australia's state indices, Feb 2026 (optional; NSW 1.20, VIC 1.19, WA 0.68)"
+OPTIONAL_TARGETS = frozenset({AUSTRALIA_STATES})
 
 
 @dataclass(frozen=True)
@@ -29,9 +33,21 @@ class Check:
     target: str
     published: str
     observed: str
-    passed: bool
+    status: str
     basis: str = ""
     note: str = ""
+
+    def __post_init__(self) -> None:
+        if self.status not in STATUSES:
+            raise ValueError(f"status must be one of {STATUSES}, not {self.status!r}")
+
+    @property
+    def passed(self) -> bool:
+        return self.status == "pass"
+
+
+def _status(condition: bool) -> str:
+    return "pass" if condition else "fail"
 
 
 def run() -> list[Check]:
@@ -71,22 +87,24 @@ def _plan_section_3(population: pd.Series) -> list[Check]:
         )
         national = int(counts["KOR"])
         checks.append(_exact(f"Korean conversations, {label}", expected_count[label], national))
+        total = int(regional_counts.sum())
         checks.append(
             Check(
                 f"Korean regional counts sum to the national count, {label}",
                 "exact",
-                f"{int(regional_counts.sum()):,} of {national:,} ({len(regional_counts)} regions)",
-                int(regional_counts.sum()) == national and len(regional_counts) == 17,
+                f"{total:,} of {national:,} ({len(regional_counts)} regions)",
+                _status(total == national and len(regional_counts) == 17),
             )
         )
         smallest = regional_counts.idxmin()
+        observed = (int(regional_counts[smallest]), regions.by_iso(smallest).name)
         count, name = expected_min[label]
         checks.append(
             Check(
                 f"Smallest regional count, {label}",
                 f"{count} ({name})",
-                f"{int(regional_counts[smallest])} ({regions.by_iso(smallest).name})",
-                (int(regional_counts[smallest]), regions.by_iso(smallest).name) == (count, name),
+                f"{observed[0]} ({observed[1]})",
+                _status(observed == (count, name)),
             )
         )
     monthly = aei.load("2026-06-26")
@@ -104,7 +122,7 @@ def _plan_section_3(population: pd.Series) -> list[Check]:
                 f"Korean regions with published usage, {label}",
                 "17",
                 str(len(regional)),
-                sorted(regional.index) == sorted(r.iso for r in regions.REGIONS),
+                _status(sorted(regional.index) == sorted(r.iso for r in regions.REGIONS)),
             )
         )
         for target, expected, observed in (
@@ -130,7 +148,7 @@ def _plan_section_3(population: pd.Series) -> list[Check]:
                 f"Korea's published AUI and rank, {label}",
                 f"{value:.2f}, rank {_rank_text(*rank)}",
                 f"{row['aui']:.2f}, rank {_rank_text(*observed)}",
-                round(row["aui"], 2) == value and observed == rank,
+                _status(_equal_at(row["aui"], value, 2) and observed == rank),
                 "published",
             )
         )
@@ -162,18 +180,25 @@ def _published_targets(population: pd.Series) -> list[Check]:
             "Korea's AUI and rank, Aug 2025 (September 2025 report)",
             "3.73, rank 5",
             f"{row['aui']:.3f}, rank {korea_rank}",
-            abs(row["aui"] - 3.73) <= 0.05 and int(row["rank_min"]) == 5 == int(row["rank_max"]),
+            _status(abs(row["aui"] - 3.73) <= 0.05 and _rank(row) == (5, 5)),
             "published",
         )
     )
     rule = aui.compute(counts, population, basis="anthropic_2025")
-    gap = (rule["aui"] - published["aui"].reindex(rule.index)).abs().max()
+    same_countries = rule.index.sort_values().equals(published.index.sort_values())
+    gap = (rule["aui"] - published["aui"].reindex(rule.index)).abs().max(skipna=False)
+    if same_countries:
+        observed = f"largest absolute difference {gap:.1e} over {len(rule)} countries"
+    else:
+        observed = (
+            f"country sets differ: {sorted(rule.index.symmetric_difference(published.index))}"
+        )
     checks.append(
         Check(
             "Rule anthropic_2025 reproduces every published AUI, Aug 2025",
             f"{len(published)} values",
-            f"largest absolute difference {gap:.1e} over {len(rule)} countries",
-            gap < 1e-6 and len(rule) == len(published),
+            observed,
+            _status(same_countries and gap < 1e-6),
             "anthropic_2025",
         )
     )
@@ -182,76 +207,93 @@ def _published_targets(population: pd.Series) -> list[Check]:
     counts = aei.geo_values(november, "country", "usage_count")
     rule = aui.compute(counts, population, basis="anthropic_2025")
     row = rule.loc["KOR"]
-    observed = (int(row["rank_min"]), int(row["rank_max"]), len(rule))
+    observed = (*_rank(row), len(rule))
     checks.append(
         Check(
             "Korea's AUI and rank, Nov 2025 (January 2026 appendix, Fig. 3)",
             "3.12, rank 7 of 116",
             f"{row['aui']:.3f}, rank {_rank_text(*observed)}",
-            abs(row["aui"] - 3.12) <= 0.05 and observed == (7, 7, 116),
+            _status(abs(row["aui"] - 3.12) <= 0.05 and observed == (7, 7, 116)),
             "anthropic_2025",
         )
     )
-    shares = aui.share_ranks(aei.geo_values(november, "country", "usage_pct"))
-    row = shares.loc["IND"]
+    shares = aei.geo_values(november, "country", "usage_pct")
+    ranked_shares = aui.share_ranks(shares, counts, population)
+    row = ranked_shares.loc["IND"]
     checks.append(
         Check(
             "India's share of global usage and rank, Nov 2025 (India brief)",
             "5.8%, rank 2",
-            f"{row['share']:.2f}%, rank {_rank_text(int(row['rank_min']), int(row['rank_max']))}",
-            abs(row["share"] - 5.8) <= 0.1 and int(row["rank_min"]) == 2 == int(row["rank_max"]),
+            f"{row['share']:.2f}%, rank {_rank_text(*_rank(row), len(ranked_shares))}",
+            _status(abs(row["share"] - 5.8) <= 0.1 and _rank(row) == (2, 2)),
             "published usage_pct",
         )
     )
 
     february = aei.load("2026-03-24")
     counts = aei.geo_values(february, "country", "usage_count")
+    shares = aei.geo_values(february, "country", "usage_pct")
     renormalized = aui.compute(counts, population, basis="renormalized")
     korea = renormalized.loc["KOR", "aui"]
     checks.append(
         Check(
             "Korea's AUI, Feb 2026 (Anthropic, 2026-05-26: 'more than 3.5 times')",
             "above 3.5",
-            f"{korea:.3f}, rank {int(renormalized.loc['KOR', 'rank_min'])} of {len(renormalized)}",
-            korea > 3.5,
+            f"{korea:.3f}, rank {_rank_text(*_rank(renormalized.loc['KOR']), len(renormalized))}",
+            _status(korea > 3.5),
             "renormalized",
         )
     )
-    shares = aui.share_ranks(aei.geo_values(february, "country", "usage_pct"))
-    row = shares.loc["AUS"]
+    ranked_shares = aui.share_ranks(shares, counts, population)
+    row = ranked_shares.loc["AUS"]
     checks.append(
         Check(
             "Australia's share of global usage and rank, Feb 2026 (Australia brief)",
             "1.6%, rank 11",
-            f"{row['share']:.2f}%, rank {_rank_text(int(row['rank_min']), int(row['rank_max']))}",
-            abs(row["share"] - 1.6) <= 0.1 and int(row["rank_min"]) == 11 == int(row["rank_max"]),
+            f"{row['share']:.2f}%, rank {_rank_text(*_rank(row), len(ranked_shares))}",
+            _status(abs(row["share"] - 1.6) <= 0.1 and _rank(row) == (11, 11)),
             "published usage_pct",
         )
     )
     row = renormalized.loc["AUS"]
     level = row["aui"]
+    geolocated = _geolocated_aui("AUS", counts, shares, population)
     checks.append(
         Check(
             "Australia's AUI rank, Feb 2026 (Australia brief: 4.1, rank 7)",
             "rank 7",
-            f"rank {_rank_text(int(row['rank_min']), int(row['rank_max']))}",
-            int(row["rank_min"]) == 7 == int(row["rank_max"]),
+            f"rank {_rank_text(*_rank(row), len(renormalized))}",
+            _status(_rank(row) == (7, 7)),
             "renormalized",
-            f"Level {level:.3f}: published to one decimal; truncates to "
-            f"{math.floor(level * 10) / 10:.1f}, rounds to {round(level, 1):.1f}.",
+            f"Published to one decimal; the basis is not pinned. Level {level:.3f} renormalized "
+            f"(truncates to {math.floor(level * 10) / 10:.1f}, rounds to {round(level, 1):.1f}); "
+            f"{geolocated:.3f} with usage over all geolocated conversations (rounds to "
+            f"{round(geolocated, 1):.1f}).",
         )
     )
     checks.append(
         Check(
-            "Australia's state indices, Feb 2026 (optional; NSW 1.20, VIC 1.19, WA 0.68)",
+            AUSTRALIA_STATES,
             "NSW 1.20, VIC 1.19, WA 0.68",
             "not run",
-            True,
+            "not run",
             "",
             "Optional target: needs ABS state population (ABS-ERP), not pinned yet.",
         )
     )
     return checks
+
+
+def _geolocated_aui(
+    country: str, counts: pd.Series, shares: pd.Series, population: pd.Series
+) -> float:
+    """AUI with usage over all geolocated conversations of the published base (the sample total
+    implied by usage_pct, less unlocated conversations) and population over the ranked
+    countries: an alternative basis for statements published to one decimal."""
+    sample = counts["KOR"] / shares["KOR"] * 100
+    located = sample - counts["not_classified"]
+    countries = aui.ranked(counts, population)
+    return (counts[country] / located) / (population[country] / population[countries].sum())
 
 
 def _observed_exposure() -> Check:
@@ -263,17 +305,30 @@ def _observed_exposure() -> Check:
         "Anthropic observed_exposure: occupations, zeros, maximum",
         "756; 411; 0.745",
         f"{occupations}; {zeros}; {maximum:.4f}",
-        (occupations, zeros, round(maximum, 3)) == (756, 411, 0.745) and len(table) == occupations,
+        _status(
+            (occupations, zeros) == (756, 411)
+            and _equal_at(maximum, 0.745, 3)
+            and len(table) == occupations
+        ),
     )
 
 
+def _equal_at(observed: float, expected: float, decimals: int) -> bool:
+    """True when ``observed`` shows as ``expected`` at ``decimals`` decimal places: within half a
+    unit of the last place, with a small allowance for binary floating point."""
+    return abs(observed - expected) <= 0.5 * 10**-decimals + 1e-9
+
+
 def _exact(target: str, expected: int, observed: int) -> Check:
-    return Check(target, f"{expected:,}", f"{observed:,}", observed == expected)
+    return Check(target, f"{expected:,}", f"{observed:,}", _status(observed == expected))
 
 
 def _rounded(target: str, expected: float, observed: float, unit: str = "") -> Check:
     return Check(
-        target, f"{expected:.2f}{unit}", f"{observed:.4f}{unit}", round(observed, 2) == expected
+        target,
+        f"{expected:.2f}{unit}",
+        f"{observed:.4f}{unit}",
+        _status(_equal_at(observed, expected, 2)),
     )
 
 
@@ -282,14 +337,23 @@ def _within(target: str, expected: float, observed: float, tolerance: float, bas
         target,
         f"{expected:.2f}",
         f"{observed:.3f}",
-        abs(observed - expected) <= tolerance,
+        _status(abs(observed - expected) <= tolerance),
         basis,
     )
+
+
+def _rank(row: pd.Series) -> tuple[int, int]:
+    return int(row["rank_min"]), int(row["rank_max"])
 
 
 def _rank_text(rank_min: int, rank_max: int, n: int | None = None) -> str:
     text = str(rank_min) if rank_min == rank_max else f"{rank_min}{EN_DASH}{rank_max}"
     return text if n is None else f"{text} of {n}"
+
+
+def summary(checks: list[Check]) -> str:
+    counts = {status: sum(c.status == status for c in checks) for status in STATUSES}
+    return ", ".join(f"{counts[status]} {status}" for status in STATUSES)
 
 
 def to_markdown(checks: list[Check]) -> str:
@@ -298,16 +362,25 @@ def to_markdown(checks: list[Check]) -> str:
         "| --- | --- | --- | --- | --- | --- |",
     ]
     for c in checks:
-        result = "not run" if c.observed == "not run" else ("pass" if c.passed else "**fail**")
+        result = "**fail**" if c.status == "fail" else c.status
         cells = (c.target, c.published, c.observed, c.basis, result, c.note)
         lines.append("| " + " | ".join(cell.replace("|", "/") for cell in cells) + " |")
     return "\n".join(lines) + "\n"
 
 
+def write_markdown(checks: list[Check], stream=None) -> None:
+    """Write the table and a summary line as UTF-8 whatever the console encoding (cp949 on
+    Korean Windows cannot encode the en dash of rank ranges)."""
+    stream = stream or sys.stdout
+    stream.reconfigure(encoding="utf-8")
+    stream.write(to_markdown(checks) + f"\n{summary(checks)}.\n")
+    stream.flush()
+
+
 def main() -> int:
     checks = run()
-    sys.stdout.write(to_markdown(checks))
-    return 0 if all(c.passed for c in checks) else 1
+    write_markdown(checks)
+    return 1 if any(c.status == "fail" for c in checks) else 0
 
 
 if __name__ == "__main__":

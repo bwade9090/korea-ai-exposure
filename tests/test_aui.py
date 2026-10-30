@@ -57,11 +57,26 @@ def test_published_values_use_the_floor_only_with_counts():
         aui.published(values)
 
 
-def test_share_ranks_exclude_pseudo_geographies_and_seychelles():
-    shares = pd.Series({"USA": 20.0, "not_classified": 15.0, "SYC": 2.5, "IND": 5.8, "KOR": 3.1})
-    frame = aui.share_ranks(shares)
+def test_share_ranks_use_the_aui_country_set():
+    counts = pd.Series(
+        {
+            "USA": 2000,
+            "not_classified": 1500,
+            "SYC": 250,
+            "IND": 580,
+            "REU": 250,
+            "KOR": 310,
+            "TGO": 150,
+        }
+    ).astype(float)
+    population = pd.Series({"USA": 9.0, "SYC": 1.0, "IND": 9.0, "KOR": 3.0, "TGO": 1.0})
+    shares = counts / 10
+    frame = aui.share_ranks(shares, counts, population, floor=200)
+    # unlocated, Seychelles, Reunion (no population) and Togo (below the floor) are not ranked
     assert list(frame.index) == ["USA", "IND", "KOR"]
     assert list(frame["rank_min"]) == [1, 2, 3]
+    unfloored = aui.share_ranks(shares, counts, population, floor=None)
+    assert list(unfloored.index) == ["USA", "IND", "KOR", "TGO"]
 
 
 def test_invalid_bases_and_floors():

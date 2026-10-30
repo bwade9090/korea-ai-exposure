@@ -97,7 +97,11 @@ def with_ranks(frame: pd.DataFrame, column: str) -> pd.DataFrame:
     return frame.sort_values([column, "rank_min"], ascending=[False, True], kind="stable")
 
 
-def share_ranks(shares: pd.Series) -> pd.DataFrame:
-    """Countries ranked by share of global usage, pseudo-geographies and Seychelles excluded."""
-    keep = shares[~shares.index.isin(EXCLUDED_FROM_RANKING)]
-    return with_ranks(pd.DataFrame({"share": keep}), "share")
+def share_ranks(
+    shares: pd.Series, usage: pd.Series, population: pd.Series, floor: float | None = FLOOR
+) -> pd.DataFrame:
+    """Countries ranked by their published share of global usage (ADR 0006 item 5), over the same
+    countries as the AUI ranking (``ranked``): pass conversation counts as ``usage`` for the
+    weekly releases, and the shares themselves with ``floor=None`` for 2026-06-26."""
+    countries = ranked(usage, population, floor).intersection(shares.index)
+    return with_ranks(pd.DataFrame({"share": shares[countries]}), "share")
