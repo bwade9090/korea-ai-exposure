@@ -14,7 +14,7 @@ VENV_PY := .venv/bin/python
 endif
 
 .NOTPARALLEL:
-.PHONY: setup lock check fetch build figures facts brief all
+.PHONY: setup lock check fetch build replicate figures facts brief all
 
 # Create .venv and install the pinned, hash-checked environment.
 setup:
@@ -39,8 +39,16 @@ check:
 fetch:
 	$(VENV_PY) -m korea_ai_exposure.fetch
 
+# Canonical tables: data/interim/aei_long.parquet and data/processed/regions.csv.
+build: fetch
+	$(VENV_PY) -m korea_ai_exposure.build
+
+# Replication checks of PLAN 2.4 against the pinned files, as a Markdown table.
+replicate: fetch
+	$(VENV_PY) -m korea_ai_exposure.replication
+
 # Implemented in later phases (docs/PLAN.md section 8); until then they fail.
-build figures facts brief:
+figures facts brief:
 	@echo "make $@: not implemented yet (see docs/PLAN.md section 8)"; exit 1
 
-all: fetch build figures facts brief
+all: build figures facts brief
