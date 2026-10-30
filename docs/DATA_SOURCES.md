@@ -41,6 +41,11 @@ Schema notes:
   two-letter country codes. Read them with `keep_default_na=False`: Namibia's code is `NA`.
 - The raw files apply only a 15-conversation cell floor. The pipeline applies the documented
   floors of 200 conversations per country and 100 per region (ADR 0006).
+- The AEI-2025-09 enriched file adds every country that has a population but no published usage,
+  with zero usage values (28 countries; `merge_population_data` in the release's preprocessing
+  notebook). Those zeros mean "not published", so the adapter drops their 140 usage rows (count,
+  share, per capita, per-capita index, tier) and keeps their population and GDP rows. August
+  2025 then has the 173 country rows of the raw file (172 countries and `not_classified`).
 - Pseudo-geographies: `not_classified` (unlocated conversations), `NONE` (February 2026),
   Seychelles (described by Anthropic as VPN or abusive traffic), and countries without
   population (Reunion). They are excluded from rankings (ADR 0006).
