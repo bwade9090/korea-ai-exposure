@@ -216,24 +216,29 @@ def peer_sets(frame: pd.DataFrame, population: pd.Series) -> dict[str, tuple[str
     }
 
 
-def profile(frame: pd.DataFrame) -> pd.DataFrame:
-    """M9 scalar metrics (``METRICS``) of every country and ``GLOBAL`` in one snapshot: shares
-    in percent, traits in the release's own units. A metric is missing for a geography whose
-    release does not publish all of its inputs."""
+def profile(frame: pd.DataFrame, levels: tuple[str, ...] = _GEO_LEVELS) -> pd.DataFrame:
+    """M9 scalar metrics (``METRICS``) of every geography at ``levels`` (countries and
+    ``GLOBAL`` by default; ``("subregion",)`` for regions) in one snapshot: shares in percent,
+    traits in the release's own units. A metric is missing for a geography whose release does
+    not publish all of its inputs."""
     if _monthly(frame):
-        patterns = pd.DataFrame({p: _whole(frame, f"collaboration_{p}_pct") for p in PATTERNS})
-        use_cases = pd.DataFrame({u: _whole(frame, f"use_case_{u}_pct") for u in USE_CASES})
-        traits = {trait: _whole(frame, trait) for trait in TRAITS}
-        tasks = _nodes(frame, "onet", "pct", level=0)
+        patterns = pd.DataFrame(
+            {p: _whole(frame, f"collaboration_{p}_pct", levels) for p in PATTERNS}
+        )
+        use_cases = pd.DataFrame({u: _whole(frame, f"use_case_{u}_pct", levels) for u in USE_CASES})
+        traits = {trait: _whole(frame, trait, levels) for trait in TRAITS}
+        tasks = _nodes(frame, "onet", "pct", level=0, levels=levels)
     else:
-        patterns = _nodes(frame, "collaboration", "collaboration_pct")
+        patterns = _nodes(frame, "collaboration", "collaboration_pct", levels=levels)
         patterns = patterns.rename(columns=lambda node: node.replace(" ", "_"))
-        use_cases = _nodes(frame, "use_case", "use_case_pct")
+        use_cases = _nodes(frame, "use_case", "use_case_pct", levels=levels)
         traits = {
-            trait: _whole(frame, trait) if trait.endswith("_mean") else _yes_share(frame, trait)
+            trait: _whole(frame, trait, levels)
+            if trait.endswith("_mean")
+            else _yes_share(frame, trait, levels)
             for trait in TRAITS
         }
-        tasks = _nodes(frame, "onet_task", "onet_task_pct").drop(
+        tasks = _nodes(frame, "onet_task", "onet_task_pct", levels=levels).drop(
             columns=["none", "not_classified"], errors="ignore"
         )
     columns = {
@@ -328,23 +333,27 @@ def _monthly(frame: pd.DataFrame) -> bool:
     return bool((frame["facet"] == "overall").any())
 
 
-def _whole(frame: pd.DataFrame, metric: str) -> pd.Series:
-    """Whole-geography values of ``metric`` for the countries and the global row; empty when
-    the release does not publish the metric."""
+def _whole(frame: pd.DataFrame, metric: str, levels: tuple[str, ...] = _GEO_LEVELS) -> pd.Series:
+    """Whole-geography values of ``metric`` for the geographies at ``levels``; empty when the
+    release does not publish the metric."""
     rows = frame[
-        frame["geo_level"].isin(_GEO_LEVELS)
-        & (frame["metric"] == metric)
-        & (frame["node_id"] == "")
+        frame["geo_level"].isin(levels) & (frame["metric"] == metric) & (frame["node_id"] == "")
     ]
     if rows["geo_id"].duplicated().any():
         raise ValueError(f"{metric}: several values per geography")
     return rows.set_index("geo_id")["value"].rename(metric)
 
 
-def _nodes(frame: pd.DataFrame, facet: str, metric: str, level: int | None = None) -> pd.DataFrame:
+def _nodes(
+    frame: pd.DataFrame,
+    facet: str,
+    metric: str,
+    level: int | None = None,
+    levels: tuple[str, ...] = _GEO_LEVELS,
+) -> pd.DataFrame:
     """Values of ``metric`` in ``facet`` by geography (rows) and node (columns)."""
     rows = frame[
-        frame["geo_level"].isin(_GEO_LEVELS)
+        frame["geo_level"].isin(levels)
         & (frame["facet"] == facet)
         & (frame["metric"] == metric)
         & (frame["node_id"] != "")
@@ -359,9 +368,11 @@ def _node_names(frame: pd.DataFrame, facet: str) -> dict[str, str]:
     return dict(zip(rows["node_id"], rows["node_name"], strict=True))
 
 
-def _yes_share(frame: pd.DataFrame, metric: str) -> pd.Series:
+def _yes_share(
+    frame: pd.DataFrame, metric: str, levels: tuple[str, ...] = _GEO_LEVELS
+) -> pd.Series:
     """Share of conversations in the ``yes`` category of a yes/no facet of a weekly release."""
-    table = _nodes(frame, metric.removesuffix("_pct"), metric)
+    table = _nodes(frame, metric.removesuffix("_pct"), metric, levels=levels)
     return table["yes"].rename(metric) if "yes" in table else pd.Series(dtype="float64")
 
 

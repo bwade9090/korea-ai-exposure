@@ -22,6 +22,26 @@ figure order of `CLAUDE.md`. Written from `korea_ai_exposure.regions`.
 The codes are facts compiled from the code lists of the tables named above, retrieved on
 2026-10-29 (`docs/discovery/01_source_verification.md`).
 
+## `denominators.csv`
+
+The denominators of the within-Korea usage index (ADR 0005) for each regional snapshot, in
+persons. Written from `korea_ai_exposure.regional` (`make build`) from the KOSIS tables pinned in
+`data/manifest.json`, retrieved on 2026-10-30 through the KOSIS OpenAPI (kosis.kr).
+
+| Column | Meaning | Source |
+| --- | --- | --- |
+| `snapshot`, `region` | Snapshot label; ISO 3166-2:KR code | — |
+| `population` | Residents aged 15-64 at the end of the snapshot month (sum of the 5-year age groups 15-19 … 60-64); excludes foreign residents | 행정안전부, 주민등록인구현황, KOSIS `DT_1B04005N` (KR-POP) |
+| `workers` | Workers by workplace region in the snapshot month: employees of establishments in industries B-S (no agriculture, forestry or fishing; no self-employed); 2025 onward provisional | 고용노동부, 사업체노동력조사, KOSIS `DT_118N_MOND66` (KR-WORK-EST) |
+| `employed` | Employed persons by region of residence, from the half-year paired with the snapshot (ADR 0004: 2025 second half for November 2025 and February 2026, 2026 first half for April and May 2026); published in thousands | 국가데이터처, 지역별고용조사, KOSIS `DT_1ES3B01J` (KR-WORK) |
+
+The 17 regions sum exactly to the national 15-64 total in every month. The resident registration
+statistics carry a note from the Ministry of the Interior and Safety that they are provided for
+viewing and reference; ADR 0007 records the decision to commit these regional totals with
+citation.
+
+## Joining KOSIS rows
+
 Join KOSIS rows to this table by code, with `regions.from_kosis`, which also checks the row's
 label. A join by name can take Sejong's single 시군구 row for the province, since KOSIS labels
 it like the province (세종특별자치시, or 세종시 in census tables). Some tables also carry
