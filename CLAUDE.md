@@ -34,10 +34,10 @@ the working protocol below, this section wins.
 
 ## Current checkpoint
 
-- Phase: **4 — regional usage (RQ2)**, not started. Phases 0–3 are complete; Checkpoint A was
-  approved on 2026-10-30 (ADRs 0003–0007 accepted).
-- Next unit: Phase 4.1, denominators (`docs/PLAN.md` §8, ADR 0005). It needs KOSIS tables; how to
-  retrieve them is an open decision in `docs/PROJECT_STATUS.md`. Checkpoint B follows Phase 4.
+- Phase: **Checkpoint B**, waiting for the owner. Phases 0–4 are complete; Checkpoint A was
+  approved on 2026-10-30 (ADRs 0003–0007 accepted); ADR 0008 (headline denominator) is proposed.
+- Next unit: once the Checkpoint B decisions (B1, B2) are recorded in `docs/PROJECT_STATUS.md`,
+  Phase 5.1, crosswalks (`docs/PLAN.md` §8, ADR 0004).
 - Until Checkpoint C, `outputs/` stays untracked: the repository is public and findings are not
   released before the ADR 0002 review.
 - Authority files, in order:
@@ -143,7 +143,7 @@ Phase 0 created these; keep the list current.
 | `make lock` | Re-pin `requirements.txt` from `requirements.in` (pip-tools, with hashes) |
 | `make check` | `ruff check`, `ruff format --check`, offline `pytest` |
 | `make fetch` | Download and checksum the files pinned in `data/manifest.json` |
-| `make build` | Canonical tables: `data/interim/aei_long.parquet` (all AEI releases, PLAN 2.2) and `data/processed/regions.csv` |
+| `make build` | Canonical tables: `data/interim/aei_long.parquet` (all AEI releases, PLAN 2.2), `data/processed/regions.csv` and `data/processed/denominators.csv` |
 | `make replicate` | Replication checks of PLAN §3 and 2.4 against the pinned files, as a Markdown table; exit 1 on any failure |
 | `make figures` | Figures (PNG and SVG) and their captions in `outputs/figures/`; needs `make build` first |
 | `make facts` | `outputs/facts.json` and result tables in `outputs/tables/`; needs `make build` first |
@@ -154,7 +154,8 @@ Recipes need GNU Make and a POSIX shell (Git Bash on Windows). Where make is mis
 recipe commands directly; on Windows `make check` is `.venv/Scripts/python -m ruff check .`,
 `.venv/Scripts/python -m ruff format --check .`, `.venv/Scripts/python -m pytest`. CI runs the
 checks on Linux (with make) and on Windows (without). Register a download with
-`python -m korea_ai_exposure.fetch --add SOURCE-ID URL PATH` (`data/README.md`).
+`python -m korea_ai_exposure.fetch --add SOURCE-ID URL PATH` (`data/README.md`); for a KOSIS
+OpenAPI URL add `--key-env KOSIS_KEY`, which pins the URL without the key.
 
 ## Conventions
 

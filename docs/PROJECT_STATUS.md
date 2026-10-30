@@ -12,7 +12,11 @@ Last updated: 2026-10-30
 - Phase 3 — national profile (RQ1): complete (2026-10-30). `make figures` draws F1–F4 with
   captions; `make facts` writes `outputs/facts.json` (336 facts) and T1. Outputs are
   deterministic and stay in `outputs/` (untracked).
-- **Phase 4 — regional usage (RQ2): next.**
+- Phase 4 — regional usage (RQ2): complete (2026-10-30). Six KOSIS tables are pinned through the
+  fetcher's key path (`key_env: KOSIS_KEY`); `make build` also writes
+  `data/processed/denominators.csv`; `make figures` adds F5–F7 and `make facts` adds T2 and the
+  RQ2 facts (620 facts in all).
+- **Checkpoint B: the owner's decision is needed before Phase 5** (open decisions below).
 - Checkpoint A approved 2026-10-30 (below).
 - The repository is public by the owner's decision of 2026-10-29 (ADR 0002 amendment), so every
   push publishes. `outputs/` stays untracked until Checkpoint C.
@@ -20,24 +24,27 @@ Last updated: 2026-10-30
 
 ## Next action
 
-Phase 4 (`docs/PLAN.md` §8): denominators for each snapshot month (4.1, ADR 0005), once the
-KOSIS retrieval below is decided; then M2–M4 for the four regional snapshots (4.2), stability
-(4.3), capital-region aggregates (4.4), regional facets (4.5), the GRDP association (4.6), and
-F5–F7 and T2 (4.7).
+The owner records the Checkpoint B decisions below; then Phase 5 (`docs/PLAN.md` §8):
+crosswalks (5.1), occupation intensities (5.2) and the decomposition (RQ3–RQ4).
 
 ## Open decisions
 
-- Phase 4.1, KOSIS retrieval: the OpenAPI key goes in the query string, which the fetcher
-  refuses to pin. Phase 1 proposed a KOSIS path that adds the key at request time and pins the
-  redacted query; the Proportionality rules freeze fetch. Options: that small path, or the owner
-  exports the tables into `data/manual/`.
-- Checkpoint B, after Phase 4: regional measurement validity (IP geolocation, commuting,
-  instability) and the headline denominator (ADR).
+- **Checkpoint B1, regional measurement validity.** Evidence (N = 17): the regional ranking is
+  stable (Spearman's rho of the population-based index 0.96–0.99 between every pair of the four
+  snapshots) and robust to the denominator (rho 0.97–0.99). Levels are concentrated: the capital
+  region has 79–83% of usage against 53% of residents aged 15–64, and only Seoul and Incheon are
+  above parity in April–May 2026. Commuting explains part of Seoul's level (workplace-based
+  employment 1.18 times residence-based; index 3.38 on residents, 2.63 on workers by workplace,
+  May 2026); IP effects (gateways, VPNs) cannot be measured. Incheon's share jumped from 4.8% to
+  10.6% in February 2026 and fell back to 6.9% in April. Recommendation: proceed to Phase 5 with
+  May 2026 as the headline, the workplace-based index and the ranks outside the capital region
+  as robustness, and February 2026 reported as instability, not used for levels.
+- **Checkpoint B2, headline denominator:** ADR 0008 (proposed): residents aged 15–64, with the
+  workplace-based index beside it.
 - Before Phase 5: the primary exposure measure for RQ4 (ADR; Anthropic's observed exposure is
   built from the same usage data, including the November 2025 sample; ILO WP140 is
   independent); the input for M5(a); handling of occupations without usage or exposure values
-  (never as zero); the OEWS vintage and suppressed state cells; the remaining crosswalk weights;
-  GRDP 2024 (preliminary) or waiting for 2025 (December 2026).
+  (never as zero); the OEWS vintage and suppressed state cells; the remaining crosswalk weights.
 - Checkpoint C: publication, after the ADR 0002 review of findings.
 
 ## Owner actions
@@ -58,8 +65,18 @@ F5–F7 and T2 (4.7).
 
 One line each; ADRs only for choices that change results (`CLAUDE.md`, Proportionality).
 
-- 2026-10-30: code reads the KOSIS key as `KOSIS_KEY`, the name in the owner's `.env` (older
-  docs say `KOSIS_API_KEY`).
+- 2026-10-30: code reads the KOSIS key as `KOSIS_KEY`, the name in the owner's `.env`.
+- 2026-10-30 (owner): KOSIS tables come through a fetcher path that adds `KOSIS_KEY` at request
+  time and pins the URL without it; keyed requests follow no redirect to another host, and a
+  KOSIS error object is refused.
+- 2026-10-30: M4 uses the work share of classified use cases; in February 2026, where coursework
+  is unpublished for Ulsan and Jeju, every region uses its work share of all conversations.
+- 2026-10-30: intervals for regional shares are Wilson 95% intervals from conversation counts
+  (weekly releases only), carried to the index with the denominator taken as exact.
+- 2026-10-30: the GRDP association (4.6) uses GRDP per capita 2024 (preliminary), the latest
+  published; 2025 is due in December 2026.
+- 2026-10-30: regional facets (4.5) keep the metrics published for all 17 regions; task
+  concentration is left out (sparse regional task breakdowns).
 - 2026-10-30: P2 uses the headline AUI; P4 is the ten nearest countries in published
   `usage_pct`, ties by country code; Korea is excluded from every peer set.
 - 2026-10-30: for April–May 2026 the headline AUI is the published value (ADR 0006 item 4b);
