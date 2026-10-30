@@ -111,13 +111,13 @@ BLS publications are in the public domain; cite BLS as the source.
 | US-OEWS-NAT | OEWS national employment by SOC, May 2025 | BLS `https://www.bls.gov/oes/special-requests/oesm25nat.zip` (public domain) | Verified 2026-10-29: 830 detailed occupations; scripted access with `BLS_USER_AGENT`. Pinned 2026-10-30 |
 | US-OEWS-ST | OEWS state employment by SOC, May 2025 | BLS `https://www.bls.gov/oes/special-requests/oesm25st.zip` | Verified 2026-10-29: 50 states, DC and 3 territories; 0.79% of employment unpublished. Pinned 2026-10-30 |
 | US-SOC2018 | 2018 SOC structure | BLS `https://www.bls.gov/soc/2018/soc_structure_2018.xlsx` | Verified 2026-10-29: needed to read broad parents (not derivable from codes). Pinned 2026-10-30 |
-| US-OEWS-OCCDEF | OEWS occupation list with definitions (documents the 12 OEWS aggregate codes) | BLS `occupation_definitions_m2021.xlsx` | Verified 2026-10-29 |
+| US-OEWS-OCCDEF | OEWS occupation list with definitions (documents the 12 OEWS aggregate codes) | BLS `occupation_definitions_m2021.xlsx` | Verified 2026-10-29; its five aggregate compositions are a constant in `crosswalk.py` (not pinned) |
 
 ## Optional
 
 | ID | Content | Source | Status |
 | --- | --- | --- | --- |
-| ILO-WP140 | ISCO-08 4-digit exposure means and SDs; task-level scores | Gmyrek et al. (2025), ILO Working Paper 140 (CC BY 4.0); companion repository `pgmyrek/2025_GenAI_scores_ISCO08`, commit `ce5fc25c2a0db2757c5bfa797c4cfc8b408431ea` (CC BY 4.0 since 2026-10-12) | Verified 2026-10-29: the companion Excel file reproduces Table A1; 427 of 436 unit groups scored. Pinned 2026-10-30 |
+| ILO-WP140 | ISCO-08 4-digit exposure means and SDs; task-level scores | Gmyrek et al. (2025), ILO Working Paper 140 (CC BY 4.0); companion repository `pgmyrek/2025_GenAI_scores_ISCO08`, commit `ce5fc25c2a0db2757c5bfa797c4cfc8b408431ea` (CC BY 4.0 since 2026-10-12) | Verified 2026-10-29: the companion Excel file reproduces Table A1; 427 of 436 unit groups scored. Pinned 2026-10-30; core input for RQ4 since ADR 0009 |
 | WB-POP | Population ages 15–64 by country (`SP.POP.1564.TO`) | World Bank WDI (CC BY 4.0) | Verified 2026-10-29: through 2025, 217 economies; no Taiwan; sensitivity for AUI (ADR 0006) |
 | ABS-ERP | Population by state and age (dataflow `ERP_Q`) | Australian Bureau of Statistics Data API, Beta (CC BY 4.0) | Verified 2026-10-29: through 2026-Q1; Australia replication only |
 

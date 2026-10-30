@@ -17,8 +17,13 @@ Last updated: 2026-10-30
   `data/processed/denominators.csv`; `make figures` adds F5–F7 and `make facts` adds T2 and the
   RQ2 facts (620 facts in all).
 - Checkpoint B approved 2026-10-30 (below); ADR 0008 accepted.
-- **Phase 5 — composition versus adoption (RQ3–RQ4): in progress.** The owner approved D1–D5 as
-  recommended on 2026-10-30 (ADR 0009 accepted; D2–D5 under Choices).
+- Phase 5 — composition versus adoption (RQ3–RQ4): complete (2026-10-30), with D1–D5 as decided
+  by the owner (ADR 0009; Choices). Nine more inputs are pinned; `crosswalk.py` maps the three
+  occupation measures to KSCO-8 sub-major groups and `decomposition.py` computes M6–M8, the
+  comparison with the Bank of Korea's rank orders and the robustness checks; `make figures`
+  adds F8–F9 and `make facts` adds T3 and the RQ3–RQ4 facts. Results stay in `outputs/`
+  (untracked) until Checkpoint C.
+- **Phase 6 — brief (owner-led): next.**
 - Checkpoint A approved 2026-10-30 (below).
 - The repository is public by the owner's decision of 2026-10-29 (ADR 0002 amendment), so every
   push publishes. `outputs/` stays untracked until Checkpoint C.
@@ -26,13 +31,17 @@ Last updated: 2026-10-30
 
 ## Next action
 
-Phase 5 (`docs/PLAN.md` §8): pin the crosswalk, OEWS, ILO and KOSIS occupation inputs; then
-crosswalks (5.1), occupation intensities (5.2), the US benchmark (5.3), Korea's `X_r`, `ŵ_r` and
-`R_r` (5.4), the rank comparison with the Bank of Korea (5.5), robustness (5.6), and F8–F9 and
-T3 (5.7).
+Phase 6 (`docs/PLAN.md` §8, owner-led): the owner drafts the brief's narrative from
+`outputs/facts.json`, the figures (captions in `outputs/figures/captions.md`) and T1–T3; Claude
+writes the methodology section and edits prose on request. Under the Proportionality rules
+`facts.json` stays and there is no brief renderer. Then one independent check of every number in
+the brief against its source, and Checkpoint C.
 
 ## Open decisions
 
+- Findings in tracked files: the Checkpoint B record below and ADR 0008 quote regional results,
+  which ADR 0002 holds back until Checkpoint C. Options: replace the numbers with pointers to the
+  untracked tables (the public history keeps them), or leave them.
 - Checkpoint C: publication, after the ADR 0002 review of findings.
 
 ## Owner actions
@@ -76,6 +85,17 @@ One line each; ADRs only for choices that change results (`CLAUDE.md`, Proportio
   equally; each OEWS aggregate is one unit (usage share summed, exposure averaged equally, ISCO
   links pooled over its components); KSCO-8 unit 8631 gets no value; the KSSC one-to-one rules
   are a sensitivity (PLAN §7: rank rho below 0.9 is not robust).
+- 2026-10-30: the one-to-one sensitivity takes the first ISCO link listed for each KSCO unit, a
+  mechanical stand-in for the KSSC/ILO rules, which need judgment.
+- 2026-10-30: the five OEWS-specific aggregates take their components from the OEWS occupation
+  definitions (a constant in `crosswalk.py`), the seven broad-code aggregates from the SOC
+  structure; BLS links to 3-digit ISCO groups and the KSCO armed-forces units fall outside the
+  unit-group chain, and the audit table lists what drops out.
+- 2026-10-30: M5(a) keeps its definition although occupations with few wage-and-salary workers
+  and common conversation topics get extreme usage per worker (AEI classifies content, not
+  users' occupations); T3 reports the observed-exposure and ILO intensities as variants.
+- 2026-10-30: US state work usage is each state's usage share times its work share, May 2026,
+  for the 50 states and DC; the ILO scores are used unadjusted (no complementarity adjustment).
 - 2026-10-30: P2 uses the headline AUI; P4 is the ten nearest countries in published
   `usage_pct`, ties by country code; Korea is excluded from every peer set.
 - 2026-10-30: for April–May 2026 the headline AUI is the published value (ADR 0006 item 4b);
