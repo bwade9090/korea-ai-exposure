@@ -3,30 +3,35 @@
 Region codes are a known trap: the same number means different regions in different systems.
 26 is Busan in administrative codes but Ulsan in Statistics Korea's survey codes; 36 is Sejong in
 one and Jeonnam in the other; Jeju is ISO KR-49 but administrative 50. Every join therefore goes
-through this table, by name or by an explicitly named code system, and numeric codes from
-different systems are never compared.
+through this table with an explicitly named code system (``by_code``, or ``from_kosis`` for KOSIS
+rows, which also checks the row's label), and numeric codes from different systems are never
+compared. Names alone cannot identify a region: KOSIS labels Sejong's single 시군구 exactly like
+the 시도 (세종특별자치시, Sejong-si), so ``from_name`` serves to validate labels, not to join.
 
 Code systems (``CODE_SYSTEMS``):
 
 - ``iso``: ISO 3166-2:KR, used by the Anthropic Economic Index (KR-11 … KR-50).
 - ``admin``: administrative (행정구역) codes of resident registration, as in force in 2026
   (Gangwon 51 since 2023-06-11, Jeonbuk 52 since 2024-01-18).
-- ``survey``: Statistics Korea survey codes, two digits (지역별고용조사, 경제활동인구조사,
-  지역소득).
-- ``survey4``: the four-digit form of the survey code used by some KOSIS tables (2600 = Ulsan).
+- ``survey``: Statistics Korea survey codes, two digits (경제활동인구조사, 지역소득).
+- ``survey4``: the four-digit form of the survey code (지역별고용조사 tables; 2600 = Ulsan).
 - ``moel``: Ministry of Employment and Labor codes (사업체노동력조사): the survey code doubled,
-  then ``00`` (111100 = Seoul).
+  then ``00`` (111100 = Seoul). KOSIS item IDs prefix them with ``ZONE2017A``.
 
-Gwangju and Jeonnam were merged into 전남광주통합특별시 (administrative code 12) on 2026-07-01
-(Act No. 21446). The table describes the 17 regions of every AEI snapshot through May 2026;
-``valid_to`` marks the two regions that ended on 2026-06-30.
+Gwangju and Jeonnam were merged into 전남광주통합특별시 on 2026-07-01 (Act No. 21446). The table
+describes the 17 regions of every AEI snapshot through May 2026; ``valid_to`` marks the two
+regions that ended on 2026-06-30. Some tables already carry the merged region as an extra
+aggregate before that date (``MERGED_CODES``); it matches no region here, so joins drop it and
+sums over regions do not count Gwangju and Jeonnam twice.
 
 Name lookup works for 시도-level names only: "광주" means Gwangju Metropolitan City, not the
 city of 광주 in Gyeonggi.
 """
 
 import csv
+import datetime
 import io
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -35,8 +40,10 @@ from korea_ai_exposure import paths
 CODE_SYSTEMS = ("iso", "admin", "survey", "survey4", "moel")
 MERGER_DATE = "2026-07-01"
 MERGED_REGION = "전남광주통합특별시"
-MERGED_ADMIN_CODE = "12"
+MERGED_CODES = {"admin": "12", "survey": "12", "moel": "202000"}
+MOEL_PREFIX = "ZONE2017A"
 CSV_PATH = paths.PROCESSED / "regions.csv"
+_ISO_DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
 
 
 @dataclass(frozen=True)
@@ -147,9 +154,35 @@ def from_name(name: str) -> Region:
         raise KeyError(f"unknown region name {name!r}") from None
 
 
-def regions_on(date: str) -> tuple[Region, ...]:
-    """Regions in existence on ``date`` (ISO format); Gwangju and Jeonnam end on 2026-06-30."""
-    return tuple(r for r in REGIONS if r.valid_to is None or date <= r.valid_to)
+def from_kosis(system: str, code: str, label: str | None = None) -> Region:
+    """The region of a KOSIS row, by its code in ``system`` (the ``ZONE2017A`` prefix of
+    employment-ministry item IDs is removed), checked against the row's label when given.
+    Codes below 시도 level, such as Sejong's single 시군구 (29010, 36110), raise ``KeyError``,
+    which a lookup by name cannot do."""
+    region = by_code(system, code.removeprefix(MOEL_PREFIX) if system == "moel" else code)
+    if label is not None and from_name(label) is not region:
+        raise ValueError(f"{system} code {code!r} is {region.name}, but its label is {label!r}")
+    return region
+
+
+def regions_on(date: datetime.date | str) -> tuple[Region, ...]:
+    """Regions in existence on ``date``, a date or an ISO string such as ``2026-05-31``;
+    Gwangju and Jeonnam end on 2026-06-30. KOSIS periods such as ``202605`` are refused:
+    convert them to a date first."""
+    day = _as_date(date)
+    return tuple(
+        r for r in REGIONS if r.valid_to is None or day <= datetime.date.fromisoformat(r.valid_to)
+    )
+
+
+def _as_date(value: datetime.date | str) -> datetime.date:
+    if isinstance(value, datetime.datetime):
+        return value.date()
+    if isinstance(value, datetime.date):
+        return value
+    if isinstance(value, str) and _ISO_DATE.fullmatch(value):
+        return datetime.date.fromisoformat(value)
+    raise ValueError(f"expected a date or an ISO date string such as 2026-05-31, not {value!r}")
 
 
 def to_csv() -> str:
