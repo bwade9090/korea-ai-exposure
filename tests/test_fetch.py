@@ -46,18 +46,19 @@ def server(monkeypatch):
     class Handler(http.server.BaseHTTPRequestHandler):
         def do_GET(self):
             state.requests.append((self.path, self.headers.get("User-Agent")))
-            if self.path in state.redirects:
+            route = self.path.split("?")[0]  # routes ignore the query, as a keyed API's would
+            if route in state.redirects:
                 self.send_response(302)
-                self.send_header("Location", state.redirects[self.path])
+                self.send_header("Location", state.redirects[route])
                 self.end_headers()
                 return
-            body = state.files.get(self.path)
+            body = state.files.get(route)
             if body is None:
                 self.send_error(404)
                 return
             self.send_response(200)
-            self.send_header("Content-Length", state.lengths.get(self.path, str(len(body))))
-            if self.path in state.chunked:
+            self.send_header("Content-Length", state.lengths.get(route, str(len(body))))
+            if route in state.chunked:
                 self.send_header("Transfer-Encoding", "chunked")
                 self.end_headers()
                 self.wfile.write(b"%x\r\n%s\r\n0\r\n\r\n" % (len(body), body))
@@ -394,6 +395,58 @@ def test_missing_user_agent_variable_is_an_error(server, tmp_path, monkeypatch):
     monkeypatch.delenv("TEST_USER_AGENT", raising=False)
     with pytest.raises(fetch.FetchError, match="TEST_USER_AGENT is not set"):
         add_one(server, tmp_path, user_agent_env="TEST_USER_AGENT")
+
+
+@pytest.fixture
+def keyed(monkeypatch):
+    """The local server stands in for a keyed API such as KOSIS; TEST_KEY holds its key."""
+    monkeypatch.setattr(fetch, "KEY_PARAMS", {"127.0.0.1": "apiKey"})
+    monkeypatch.setenv("TEST_KEY", "k3y/with+chars")
+    return "TEST_KEY"
+
+
+def test_key_is_added_at_request_time_and_never_pinned(server, tmp_path, keyed):
+    [pin] = add_one(server, tmp_path, key_env=keyed)
+    assert server.requests[0][0] == "/test/table.csv?apiKey=k3y%2Fwith%2Bchars"
+    assert pin.key_env == keyed
+    assert "k3y" not in fetch.dump_manifest([pin])
+    _, errors = fetch.fetch([pin], tmp_path / "elsewhere", log=quiet)
+    assert errors == []
+    assert server.requests[-1][0].endswith("?apiKey=k3y%2Fwith%2Bchars")
+
+
+def test_a_keyed_request_is_not_redirected_to_another_host(server, tmp_path, keyed):
+    server.redirects["/test/table.csv"] = "https://cdn.example/table.csv"
+    with pytest.raises(fetch.FetchError, match="refused redirect") as caught:
+        add_one(server, tmp_path, key_env=keyed)
+    assert "k3y" not in str(caught.value)
+
+
+def test_an_api_error_object_is_refused_and_the_key_removed(server, tmp_path, keyed):
+    body = json.dumps({"err": "20", "errMsg": "invalid apiKey k3y/with+chars"}).encode()
+    with pytest.raises(fetch.FetchError, match="API error 20") as caught:
+        add_one(server, tmp_path, body=body, path="test/table.json", key_env=keyed)
+    assert "k3y" not in str(caught.value)
+    assert files_under(tmp_path) == []
+
+
+def test_missing_key_variable_is_an_error(server, tmp_path, keyed, monkeypatch):
+    monkeypatch.delenv("TEST_KEY")
+    with pytest.raises(fetch.FetchError, match="TEST_KEY is not set"):
+        add_one(server, tmp_path, key_env=keyed)
+
+
+@pytest.mark.parametrize(
+    ("name", "url"),
+    [
+        ("KOSIS_TOKEN", "https://kosis.kr/openapi/x.do"),
+        ("KOSIS_KEY", "https://example.org/openapi/x.do"),
+        (7, "https://kosis.kr/openapi/x.do"),
+    ],
+)
+def test_key_env_needs_a_key_variable_and_a_keyed_host(name, url):
+    with pytest.raises(fetch.FetchError, match="key_env"):
+        fetch.check_key_env(name, url)
 
 
 @pytest.mark.parametrize("name", ["KOSIS_API_KEY", "GITHUB_TOKEN", "bls_user_agent", 7, True])

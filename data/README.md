@@ -38,7 +38,8 @@ Add `--user-agent-env BLS_USER_AGENT` for bls.gov files. Local paths use letters
   `main` (`.../resolve/<commit>/...`).
 - Never put credentials in a pinned URL. The fetcher refuses URLs with credential parameters
   (`apiKey`, `serviceKey`, `token`, ...) or containing the value of any variable in `.env`, and
-  error messages omit query strings. Keyed APIs such as KOSIS need their own fetch path that adds
-  the key at request time.
+  error messages omit query strings. Keyed APIs (KOSIS) are pinned without the key: pass
+  `--key-env KOSIS_KEY` with `--add`, and the fetcher adds the key at request time, follows no
+  redirect to another host, and refuses a KOSIS error object.
 - TLS verification uses the operating system's trust store and is never disabled. Redirects are
   followed only to HTTPS, and a custom User-Agent is sent only to the pinned host.

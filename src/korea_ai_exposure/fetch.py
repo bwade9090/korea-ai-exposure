@@ -21,6 +21,11 @@ certificate is installed in the OS. Redirects are followed only to HTTPS. A cust
 URLs that carry credentials, including the value of any variable in ``.env``, are refused, and
 error messages show URLs without their query strings.
 
+APIs that take a key in the query string (``KEY_PARAMS``: the KOSIS OpenAPI) are pinned without
+it: the pin names the variable that holds the key (``key_env``, for example ``KOSIS_KEY``), and
+the key is added only when the request is made. A keyed request is never redirected to another
+host, the key is removed from error messages, and an API error object is refused, not pinned.
+
 Usage::
 
     python -m korea_ai_exposure.fetch                     # fetch and verify every pinned file
@@ -28,6 +33,7 @@ Usage::
     python -m korea_ai_exposure.fetch --refresh           # also re-check verified files upstream
     python -m korea_ai_exposure.fetch --update            # accept and re-pin changed files
     python -m korea_ai_exposure.fetch --add SOURCE URL PATH [--user-agent-env BLS_USER_AGENT]
+    python -m korea_ai_exposure.fetch --add SOURCE URL PATH --key-env KOSIS_KEY
 """
 
 import argparse
@@ -81,13 +87,15 @@ CREDENTIAL_PARAMS = frozenset(
 )
 MIN_SECRET_LENGTH = 8
 HTML_SUFFIXES = frozenset({".htm", ".html"})
+KEY_PARAMS = {"kosis.kr": "apiKey"}  # host -> the query parameter that carries its API key
 
 _FIELDS = ("path", "source", "url", "sha256", "bytes", "retrieved_at")
-_OPTIONAL_FIELDS = ("user_agent_env",)
+_OPTIONAL_FIELDS = ("user_agent_env", "key_env")
 _SHA256 = re.compile(r"[0-9a-f]{64}")
 _SOURCE_ID = re.compile(r"[A-Z]+(?:-[A-Z0-9]+)+")
 _TIMESTAMP = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z")
 _USER_AGENT_ENV = re.compile(r"[A-Z][A-Z0-9_]*_USER_AGENT")
+_KEY_ENV = re.compile(r"[A-Z][A-Z0-9_]*_KEY")
 _PATH_PART = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*")
 _WINDOWS_DEVICE = re.compile(r"(?i)(?:con|prn|aux|nul|com[0-9]|lpt[0-9])")
 
@@ -109,6 +117,7 @@ class Pin:
     size: int
     retrieved_at: str
     user_agent_env: str | None = None
+    key_env: str | None = None
 
     @classmethod
     def from_record(cls, record: object, secrets: Collection[str] = ()) -> Self:
@@ -128,6 +137,7 @@ class Pin:
             size=record["bytes"],
             retrieved_at=record["retrieved_at"],
             user_agent_env=record.get("user_agent_env"),
+            key_env=record.get("key_env"),
         )
         pin.validate(secrets)
         return pin
@@ -143,12 +153,15 @@ class Pin:
         }
         if self.user_agent_env:
             record["user_agent_env"] = self.user_agent_env
+        if self.key_env:
+            record["key_env"] = self.key_env
         return record
 
     def validate(self, secrets: Collection[str] = ()) -> None:
         check_path(self.path)
         check_url(self.url, secrets)
         check_user_agent_env(self.user_agent_env)
+        check_key_env(self.key_env, self.url)
         if not isinstance(self.source, str) or not _SOURCE_ID.fullmatch(self.source):
             raise FetchError(f"{self.path}: malformed source ID {self.source!r}")
         if not isinstance(self.sha256, str) or not _SHA256.fullmatch(self.sha256):
@@ -209,6 +222,17 @@ def check_user_agent_env(name: object) -> None:
     manifest entry cannot send another secret from the environment to a server."""
     if name is not None and (not isinstance(name, str) or not _USER_AGENT_ENV.fullmatch(name)):
         raise FetchError(f"user_agent_env must name a *_USER_AGENT variable, not {name!r}")
+
+
+def check_key_env(name: object, url: object) -> None:
+    """A pin may name a ``*_KEY`` variable only for a host in ``KEY_PARAMS``, so a manifest entry
+    cannot send a key to any other server."""
+    if name is None:
+        return
+    if not isinstance(name, str) or not _KEY_ENV.fullmatch(name):
+        raise FetchError(f"key_env must name a *_KEY variable, not {name!r}")
+    if not isinstance(url, str) or urllib.parse.urlsplit(url).hostname not in KEY_PARAMS:
+        raise FetchError(f"key_env is allowed only for {', '.join(sorted(KEY_PARAMS))}")
 
 
 def redact(url: str) -> str:
@@ -328,6 +352,7 @@ def add(
     raw_dir: Path,
     registered: Collection[str],
     user_agent_env: str | None = None,
+    key_env: str | None = None,
     update: bool = False,
     secrets: Collection[str] = (),
     now: Callable[[], str] = utc_now,
@@ -345,10 +370,15 @@ def add(
         raise FetchError(f"{previous.path} is already pinned; pass --update to re-pin it")
     if user_agent_env is None and previous:
         user_agent_env = previous.user_agent_env
+    if key_env is None and previous:
+        key_env = previous.key_env
     check_user_agent_env(user_agent_env)
-    got = _download(url, dest, _user_agent(user_agent_env))
+    check_key_env(key_env, url)
+    got = _download_pinned(url, dest, _user_agent(user_agent_env), key_env)
     _place(got.tmp, dest)
-    by_path[path.casefold()] = Pin(path, source, url, got.sha256, got.size, now(), user_agent_env)
+    by_path[path.casefold()] = Pin(
+        path, source, url, got.sha256, got.size, now(), user_agent_env, key_env
+    )
     log(f"pinned    {path} ({got.size:,} bytes, sha256 {got.sha256[:12]}..., from {got.host})")
     return list(by_path.values())
 
@@ -361,7 +391,7 @@ def _fetch_one(
     if verified and not refresh:
         log(f"verified  {pin.path}")
         return pin
-    got = _download(pin.url, dest, _user_agent(pin.user_agent_env))
+    got = _download_pinned(pin.url, dest, _user_agent(pin.user_agent_env), pin.key_env)
     if (got.sha256, got.size) == (pin.sha256, pin.size):
         if verified:
             got.tmp.unlink()
@@ -432,15 +462,18 @@ def _looks_like_html(head: bytes) -> bool:
 
 class _StrictRedirect(urllib.request.HTTPRedirectHandler):
     """Follow redirects only to HTTPS (plain HTTP only between loopback hosts), and send a custom
-    User-Agent only to the pinned host."""
+    User-Agent only to the pinned host. With ``same_host_only`` (keyed requests), follow no
+    redirect to another host."""
 
-    def __init__(self, origin_host: str | None) -> None:
+    def __init__(self, origin_host: str | None, same_host_only: bool = False) -> None:
         super().__init__()
         self.origin_host = origin_host
+        self.same_host_only = same_host_only
 
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         target = urllib.parse.urlsplit(newurl)
-        if not _allowed_target(target.scheme, target.hostname):
+        elsewhere = self.same_host_only and target.hostname != self.origin_host
+        if elsewhere or not _allowed_target(target.scheme, target.hostname):
             raise urllib.error.HTTPError(
                 req.full_url,
                 code,
@@ -455,12 +488,56 @@ class _StrictRedirect(urllib.request.HTTPRedirectHandler):
         return new
 
 
-def _download(url: str, dest: Path, user_agent: str) -> Download:
+def _download_pinned(url: str, dest: Path, user_agent: str, key_env: str | None) -> Download:
+    """``_download`` of a pinned URL; with ``key_env``, the key is added to the query for this
+    request only, kept to the pinned host, removed from error messages, and an API error
+    object in place of data is refused."""
+    if not key_env:
+        return _download(url, dest, user_agent)
+    key = os.environ.get(key_env, "").strip()
+    if not key:
+        raise FetchError(f"{key_env} is not set; add it to .env (see .env.example)")
+    parts = urllib.parse.urlsplit(url)
+    param = urllib.parse.urlencode({KEY_PARAMS[parts.hostname]: key})
+    keyed = parts._replace(query=f"{parts.query}&{param}" if parts.query else param)
+    try:
+        got = _download(urllib.parse.urlunsplit(keyed), dest, user_agent, same_host=True)
+    except FetchError as exc:
+        raise FetchError(_scrub(str(exc), key)) from None
+    _refuse_api_error(got, key)
+    return got
+
+
+def _refuse_api_error(got: Download, key: str) -> None:
+    """KOSIS answers an invalid request with HTTP 200 and a JSON object holding ``err``; data
+    come as a JSON array. Refuse the object rather than pin it as data."""
+    with got.tmp.open("rb") as handle:
+        head = handle.read(64).lstrip()
+    if not head.startswith(b"{"):
+        return
+    try:
+        answer = json.loads(got.tmp.read_text(encoding="utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return
+    if isinstance(answer, dict) and "err" in answer:
+        got.tmp.unlink()
+        message = f"{got.host}: API error {answer.get('err')}: {answer.get('errMsg', '')}"
+        raise FetchError(_scrub(message, key))
+
+
+def _scrub(text: str, secret: str) -> str:
+    forms = {secret, urllib.parse.quote(secret, safe=""), urllib.parse.quote_plus(secret)}
+    for form in sorted(forms, key=len, reverse=True):
+        text = text.replace(form, "<key>")
+    return text
+
+
+def _download(url: str, dest: Path, user_agent: str, same_host: bool = False) -> Download:
     """Stream ``url`` into a temporary file beside ``dest``; the caller moves it into place or
     deletes it."""
     opener = urllib.request.build_opener(
         urllib.request.HTTPSHandler(context=tls_context()),
-        _StrictRedirect(urllib.parse.urlsplit(url).hostname),
+        _StrictRedirect(urllib.parse.urlsplit(url).hostname, same_host_only=same_host),
     )
     request = urllib.request.Request(url, headers={"User-Agent": user_agent})
     tmp: Path | None = None
@@ -530,6 +607,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="with --add: environment variable holding the User-Agent, e.g. BLS_USER_AGENT",
     )
     parser.add_argument(
+        "--key-env",
+        metavar="VAR",
+        help="with --add: environment variable holding the API key, e.g. KOSIS_KEY",
+    )
+    parser.add_argument(
         "--source",
         action="append",
         metavar="ID",
@@ -553,8 +635,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--registry", type=Path, default=paths.SOURCES_REGISTRY, help=argparse.SUPPRESS
     )
     args = parser.parse_args(argv)
-    if args.user_agent_env and not args.add:
-        parser.error("--user-agent-env requires --add")
+    if (args.user_agent_env or args.key_env) and not args.add:
+        parser.error("--user-agent-env and --key-env require --add")
     if args.add and (args.source or args.refresh):
         parser.error("--source and --refresh cannot be combined with --add")
     load_dotenv(args.env_file)
@@ -573,6 +655,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 raw_dir=args.raw_dir,
                 registered=registered_sources(args.registry),
                 user_agent_env=args.user_agent_env,
+                key_env=args.key_env,
                 update=args.update,
                 secrets=secrets,
             )
