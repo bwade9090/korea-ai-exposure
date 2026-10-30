@@ -16,7 +16,9 @@ Last updated: 2026-10-30
   fetcher's key path (`key_env: KOSIS_KEY`); `make build` also writes
   `data/processed/denominators.csv`; `make figures` adds F5–F7 and `make facts` adds T2 and the
   RQ2 facts (620 facts in all).
-- **Checkpoint B: the owner's decision is needed before Phase 5** (open decisions below).
+- Checkpoint B approved 2026-10-30 (below); ADR 0008 accepted.
+- **Phase 5 — composition versus adoption (RQ3–RQ4): next, after the owner's decisions D1–D5
+  (open decisions below).**
 - Checkpoint A approved 2026-10-30 (below).
 - The repository is public by the owner's decision of 2026-10-29 (ADR 0002 amendment), so every
   push publishes. `outputs/` stays untracked until Checkpoint C.
@@ -24,27 +26,33 @@ Last updated: 2026-10-30
 
 ## Next action
 
-The owner records the Checkpoint B decisions below; then Phase 5 (`docs/PLAN.md` §8):
-crosswalks (5.1), occupation intensities (5.2) and the decomposition (RQ3–RQ4).
+The owner decides D1–D5 below; then Phase 5 (`docs/PLAN.md` §8): crosswalks (5.1), occupation
+intensities (5.2) and the decomposition (RQ3–RQ4).
 
 ## Open decisions
 
-- **Checkpoint B1, regional measurement validity.** Evidence (N = 17): the regional ranking is
-  stable (Spearman's rho of the population-based index 0.96–0.99 between every pair of the four
-  snapshots) and robust to the denominator (rho 0.97–0.99). Levels are concentrated: the capital
-  region has 79–83% of usage against 53% of residents aged 15–64, and only Seoul and Incheon are
-  above parity in April–May 2026. Commuting explains part of Seoul's level (workplace-based
-  employment 1.18 times residence-based; index 3.38 on residents, 2.63 on workers by workplace,
-  May 2026); IP effects (gateways, VPNs) cannot be measured. Incheon's share jumped from 4.8% to
-  10.6% in February 2026 and fell back to 6.9% in April. Recommendation: proceed to Phase 5 with
-  May 2026 as the headline, the workplace-based index and the ranks outside the capital region
-  as robustness, and February 2026 reported as instability, not used for levels.
-- **Checkpoint B2, headline denominator:** ADR 0008 (proposed): residents aged 15–64, with the
-  workplace-based index beside it.
-- Before Phase 5: the primary exposure measure for RQ4 (ADR; Anthropic's observed exposure is
-  built from the same usage data, including the November 2025 sample; ILO WP140 is
-  independent); the input for M5(a); handling of occupations without usage or exposure values
-  (never as zero); the OEWS vintage and suppressed state cells; the remaining crosswalk weights.
+Before Phase 5, with recommendations:
+
+- **D1, primary exposure measure for RQ4:** ADR 0009 (proposed): ILO WP140 (Gmyrek et al.
+  2025), with Anthropic's observed exposure as the secondary measure.
+- **D2, input for M5(a):** the USA's shares of detailed SOC occupations in release 2026-06-26,
+  May 2026 (O*NET-SOC 2019 codes truncated to SOC 2018), over OEWS national employment shares;
+  global shares as the sensitivity (PLAN §6). The weekly releases have no SOC facet and get no
+  in-house task-to-SOC map (ADR 0006 item 7).
+- **D3, occupations without a value:** left out, with the weights renormalized over occupations
+  that have one, and coverage reported at each step (share of US employment with a value; share
+  of Korean employment with an assigned value). Never zero; the 411 zeros of observed exposure
+  are published values and stay.
+- **D4, OEWS:** May 2025 (national and state; released 2026-05-15). Suppressed state cells (0.79%
+  of employment in the 50 states and DC; 0.12–5.84% by state) are left out, with each state's
+  coverage reported.
+- **D5, remaining crosswalk weights (PLAN §7):** a SOC 2018 code that splits into several SOC
+  2010 codes divides its employment equally among them; each of the 12 OEWS aggregate codes is
+  one unit, whose usage share is the sum of its components', whose exposure is their
+  equal-weight mean, and whose ISCO links are theirs; KSCO-8 unit 8631, which has no ISCO-08
+  link, gets no value (its minor group averages the other units); the KSSC one-to-one rules are
+  a sensitivity, reported with the Spearman rho of the regional rankings (PLAN §7: below 0.9 is
+  not robust).
 - Checkpoint C: publication, after the ADR 0002 review of findings.
 
 ## Owner actions
@@ -101,8 +109,17 @@ None.
 | Plan | Approve `docs/PLAN.md` | Approved | 2026-10-29 | Owner, in session: approve the plan, start with Phase 0, report Phase 1 results at Checkpoint A |
 | Visibility | Repository public or private (ADR 0002) | Decided | 2026-10-29 | Owner: keep the repository public |
 | A | Sources, regional occupation tier, denominators, peer sets | Approved | 2026-10-30 | Owner: approve A1–A8 as recommended; ADRs 0003–0007 accepted; `outputs/` untracked until Checkpoint C |
-| B | Regional measurement validity; headline denominator | Pending | | |
+| B | Regional measurement validity; headline denominator | Approved | 2026-10-30 | Owner: approve B1 and B2 as recommended; ADR 0008 accepted |
 | C | Publication | Pending | | |
+
+## Checkpoint B — decisions (owner, 2026-10-30)
+
+The owner approved both items as recommended.
+
+| # | Decision | Decided | Record |
+| --- | --- | --- | --- |
+| B1 | Regional measurement validity | Proceed to Phase 5 with May 2026 as the headline month; report the workplace-based index and the ranks outside the capital region as robustness; report February 2026 (Incheon's 4.8% → 10.6% → 6.9%) as instability, not for levels; state that IP effects (gateways, VPNs) cannot be measured. Evidence: ranking stable across snapshots (rho 0.96–0.99) and denominators (0.97–0.99), N = 17; capital region 79–83% of usage against 53% of residents aged 15–64; Seoul's workplace-to-residence employment ratio 1.18 | This file |
+| B2 | Headline denominator | Residents aged 15–64 at month end, with the workplace-based index beside it (Seoul: 3.38 and 2.63 in May 2026) | ADR 0008 |
 
 ## Checkpoint A — decisions (owner, 2026-10-30)
 

@@ -1,6 +1,7 @@
 # ADR 0008 — Headline denominator of the within-Korea usage index
 
-- Status: proposed, 2026-10-30, for Checkpoint B.
+- Status: accepted, 2026-10-30 (Checkpoint B: the owner approved the proposal as written).
+  Proposed 2026-10-30.
 - Decider: Hyungbae Cho
 - Evidence: `outputs/tables/T2.csv` and `outputs/facts.json` (`rq2.*`), from
   `korea_ai_exposure.regional`; the denominators are in `data/processed/denominators.csv`.
@@ -38,7 +39,7 @@ Findings:
    agricultural provinces and provisional for 2025 onward.
 3. **Employed persons by residence.** Half-yearly, so it does not match the snapshot month.
 
-## Proposed decision
+## Decision
 
 Option 1 for the headline index (F5, the brief), with the workplace-based index reported for
 Seoul and in T2, and the residence-based index in T2. Phase 5 uses employment by occupation
