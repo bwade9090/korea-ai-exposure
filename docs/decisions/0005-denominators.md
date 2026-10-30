@@ -1,7 +1,8 @@
 # ADR 0005 — Denominators for the within-Korea usage index
 
-- Status: proposed, 2026-10-29. Owner decision at Checkpoint A; the headline choice among the
-  confirmed denominators is made at Checkpoint B (PLAN Phase 4).
+- Status: accepted, 2026-10-30 (Checkpoint A: the owner approved the proposal as written); the
+  headline choice among these denominators is made at Checkpoint B (PLAN Phase 4). Proposed
+  2026-10-29.
 - Decider: Hyungbae Cho
 - Evidence: `docs/discovery/01_source_verification.md` §1.3
 
@@ -20,7 +21,7 @@ M3 divides each region's share of Korean usage by its share of a denominator. Ph
   B–S: no agriculture, forestry or fishing, and no self-employed or unpaid family workers.
 - Residence-based employment for all 17 regions is in `DT_1ES3B01J` (half-yearly, benchmarked).
 
-## Decision (proposed)
+## Decision
 
 1. **Population:** residents aged 15–64 at the end of each snapshot month (November 2025,
    February 2026, April 2026, May 2026), from resident registration. Foreign residents are

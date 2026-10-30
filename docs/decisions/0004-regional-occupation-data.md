@@ -1,6 +1,7 @@
 # ADR 0004 — Regional occupation data and crosswalk route
 
-- Status: proposed, 2026-10-29. Owner decision at Checkpoint A.
+- Status: accepted, 2026-10-30 (Checkpoint A: the owner approved the proposal as written).
+  Proposed 2026-10-29.
 - Decider: Hyungbae Cho
 - Evidence: `docs/discovery/01_source_verification.md` §1.2 and §1.4
 
@@ -28,7 +29,7 @@ finer occupations), and PLAN §7 routed the crosswalk through KSCO-7. Phase 1 fo
 - The official KSCO-8 ↔ ISCO-08 correspondence (KSSC, November 2025) links 4-digit unit groups;
   unit 8631 has no link. No official KSCO-7 ↔ ISCO-08 table is published.
 
-## Decision (proposed)
+## Decision
 
 1. **Tier T1.** Regional occupation structure comes from `DT_1ES3B06J` at the sub-major level.
    No MDIS data are used. Optional, owner-run: a workplace-based sensitivity from the MDIS public

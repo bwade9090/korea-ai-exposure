@@ -1,6 +1,7 @@
 # ADR 0001 — Scope and positioning
 
-- Status: proposed, 2026-10-29. Owner decision pending.
+- Status: accepted, 2026-10-29, with the owner's approval of `docs/PLAN.md`, which adopts these
+  decisions (§1, §4).
 - Decider: Hyungbae Cho
 
 ## Context

@@ -1,6 +1,7 @@
 # ADR 0003 — Peer sets
 
-- Status: proposed, 2026-10-29. Owner decision at Checkpoint A.
+- Status: accepted, 2026-10-30 (Checkpoint A: the owner approved the proposal as written).
+  Proposed 2026-10-29.
 - Decider: Hyungbae Cho
 - Evidence: `docs/discovery/01_source_verification.md` §1.1
 
@@ -35,7 +36,7 @@ with at least 200 conversations. Phase 1 found:
   for release 2026-06-26). For task concentration and other facet metrics whose coverage grows
   with sample size (PLAN §6).
 
-## Decision (proposed)
+## Decision
 
 Use P1a and P1b for the national profile, P2 and P3 for rankings, and P4 for facet comparisons.
 Population for recomputed AUIs comes from Anthropic's 2024 working-age file (AEI-WAP2024), which

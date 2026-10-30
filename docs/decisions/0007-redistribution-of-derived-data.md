@@ -1,6 +1,8 @@
 # ADR 0007 — What derived data the public repository may contain
 
-- Status: proposed, 2026-10-29. Owner decision at Checkpoint A.
+- Status: accepted, 2026-10-30 (Checkpoint A: the owner approved the proposal as written,
+  including decision 3, committing resident registration aggregates with citation). Proposed
+  2026-10-29.
 - Decider: Hyungbae Cho
 - Evidence: `docs/discovery/01_source_verification.md`, licence notes; `docs/DATA_SOURCES.md`
 
@@ -19,13 +21,13 @@ sources' terms differ:
 | BLS, O*NET, World Bank, ABS, ILO WP140 | Public domain; CC BY 4.0 (ILO adds an adaptation notice) | Derived tables with attribution |
 | Bank of Korea issue notes | All rights reserved; linking is free, other reuse needs prior consultation and approval | Cite; commit rank orders only |
 
-## Decision (proposed)
+## Decision
 
 1. Raw downloads are never committed (unchanged).
 2. `data/processed/` may hold derived tables from AEI, KOSIS, BLS, O*NET, World Bank, ABS and
    ILO data, each with source, period, access date and licence in a sidecar note.
 3. Resident registration aggregates (regional 15–64 totals) are committed with citation, and
-   the methodology note records the MOIS note. Alternative: rebuild them at build time only.
+   the methodology note records the MOIS note.
 4. KSSC crosswalks are rebuilt at build time from the pinned originals; only project measures
    computed with them (for example, exposure by KSCO-8 sub-major group) are committed.
 5. From the Bank of Korea note, only the published regional rank orders are used, with full

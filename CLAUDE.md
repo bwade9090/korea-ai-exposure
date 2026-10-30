@@ -16,10 +16,11 @@ observed usage compares with occupational exposure; it does not repeat the expos
 
 ## Current checkpoint
 
-- Phase: **Checkpoint A**. Phases 0 and 1 are complete (plan approved 2026-10-29). The owner's
-  Checkpoint A decisions are pending: `docs/PROJECT_STATUS.md` lists them, with proposed
-  ADRs 0003–0007.
-- Next unit: once the decisions are recorded, Phase 2 (AEI ingestion and replication).
+- Phase: **2 — AEI ingestion and replication**, in progress. Phases 0 and 1 are complete;
+  Checkpoint A was approved on 2026-10-30 (ADRs 0003–0007 accepted).
+- Next unit: the next open Phase 2 item in `docs/PROJECT_STATUS.md`. Checkpoint B follows Phase 4.
+- Until Checkpoint C, `outputs/` stays untracked: the repository is public and findings are not
+  released before the ADR 0002 review.
 - Authority files, in order:
   1. `docs/PLAN.md` — scope, measures, phases, acceptance criteria.
   2. `docs/PROJECT_STATUS.md` — current state, next action, blockers, checkpoint decisions.

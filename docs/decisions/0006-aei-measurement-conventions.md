@@ -1,6 +1,7 @@
 # ADR 0006 — AEI measurement conventions
 
-- Status: proposed, 2026-10-29. Owner decision at Checkpoint A, before Phase 2 replication.
+- Status: accepted, 2026-10-30 (Checkpoint A: the owner approved the proposal as written).
+  Proposed 2026-10-29.
 - Decider: Hyungbae Cho
 - Evidence: `docs/discovery/01_source_verification.md` §1.1
 
@@ -35,7 +36,7 @@ Phase 1 reproduced every value in PLAN §3 and found conventions that differ bet
   collaboration, task traits and other categorical facets; artifacts in 2026-06-26). In February
   2026 the coursework cluster is suppressed in Ulsan and Jeju.
 
-## Decision (proposed)
+## Decision
 
 1. **Pinning.** Every AEI download is pinned to Hugging Face commit
    `4e5f69fab13a9c3f7d0dcc31a6f893a9818738f6`, which includes the 2026-05-21 February file.

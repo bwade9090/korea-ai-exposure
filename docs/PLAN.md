@@ -2,7 +2,8 @@
 
 - Project: korea-ai-exposure
 - Owner: Hyungbae Cho
-- Status: approved by the owner, 2026-10-29 (recorded in `docs/PROJECT_STATUS.md`).
+- Status: approved by the owner, 2026-10-29; amended by the Checkpoint A decisions of 2026-10-30
+  (ADRs 0003–0007). Both are recorded in `docs/PROJECT_STATUS.md`.
 
 ## 1. Objective
 
@@ -94,28 +95,27 @@ Full registry with URLs, licenses, and status: `docs/DATA_SOURCES.md`.
 | US benchmark | BLS OEWS national and state | M5, M8 |
 | Optional | ILO (2025) ISCO-08 exposure scores; World Bank 15–64 population; ABS population by state and age | Robustness, replication |
 
-Regional occupation data come in two tiers. Checkpoint A picks one.
-
-- **T1 — public tables.** The finest occupation level KOSIS publishes by region: at least KSCO
-  major groups, possibly sub-major groups. Fully reproducible from a clean clone.
-- **T2 — MDIS microdata.** 지역별고용조사 microdata the owner downloads into `data/manual/`.
-  Finer occupations. Only aggregates leave the owner's machine, under a minimum-cell rule.
+Regional occupation data: tier T1, public tables (Checkpoint A, ADR 0004). KOSIS `DT_1ES3B06J`
+gives the 17 regions by 56 KSCO-8 sub-major groups, half-yearly, and reproduces from a clean clone.
+Tier T2, MDIS microdata, was dropped: Phase 1 found it no finer by region.
 
 ## 6. Measures
 
 Notation: r = region, c = country, o = SOC occupation, k = KSCO group, t = snapshot.
 
 - **M1 — Country share and AUI.** `s_ct` is country c's share of global conversations;
-  `AUI_ct = s_ct / (c's share of working-age population)`. Use published values where they exist
-  (releases 2025-09-15 and 2026-06-26). For the raw 2026-01-15 and 2026-03-24 files, recompute with
-  World Bank 15–64 population and the 200-conversation country floor, then validate against
-  reported values.
+  `AUI_ct = s_ct / (c's share of working-age population)`. Two series (ADR 0006): published values,
+  each labelled with its basis, and a headline series on one basis for all five snapshots, with
+  usage and working-age population shares both taken over the ranked countries (at least 200
+  conversations, pseudo-geographies excluded). Population comes from Anthropic's 2024
+  working-age file (AEI-WAP2024); World Bank 2025 data are a sensitivity.
 - **M2 — Regional usage share.** `u_rt` is the published `usage_pct` for Korean subregions; it sums
   to 100 within Korea.
 - **M3 — Within-Korea usage index.** `I_rt = u_rt / p_rt`, where `p_rt` is region r's share of
-  Korea's 15–64 resident population in the snapshot month. 1.0 means parity, as in the Australia
-  brief. Alternative denominators: share of workplace-based employment (addresses commuting);
-  share of total employment.
+  Korea's 15–64 resident population at the end of the snapshot month. 1.0 means parity, as in the
+  Australia brief. Alternative denominators (ADR 0005): workers by workplace region from the
+  establishment survey (addresses commuting; employees only); residence-based employment. The
+  headline denominator is chosen at Checkpoint B.
 - **M4 — Work-usage share.** `w_rt = u_rt × work_rt / Σ_s (u_st × work_st)`, where `work_rt` is the
   region's work use-case share.
 - **M5 — Occupation intensity.** Two variants. Both assume that workers generate conversations
@@ -153,9 +153,10 @@ Known measurement issues, handled explicitly:
 
 ## 7. Crosswalk design (SOC 2018 → KSCO)
 
-Chain: SOC 2018 detailed → SOC 2010 detailed (BLS) → ISCO-08 unit group (BLS) → KSCO-7 unit group
-(국가데이터처, formerly Statistics Korea) → KSCO-8 where the regional data use it → the KSCO level
-at which regional employment is published.
+Chain (ADR 0004): SOC 2018 detailed → SOC 2010 detailed (BLS) → ISCO-08 unit group (BLS) → KSCO-8
+unit group (official KSSC correspondence, November 2025) → KSCO-8 sub-major group, the level at
+which regional employment is published. No official KSCO-7 ↔ ISCO-08 table exists, and the
+regional data are KSCO-8 throughout.
 
 AEI SOC-occupation nodes carry O*NET-SOC 2019 codes (e.g., `15-1299.03`). Aggregate them to
 6-digit SOC 2018 first.
@@ -166,8 +167,10 @@ Weights:
   group's value is the employment-weighted mean over the SOC employment allocated to it.
 - ISCO → KSCO: equal-weight mean over ISCO matches, since no Korean employment exists at ISCO
   level. The sensitivity uses the minimum and the maximum.
-- Fine KSCO → coarse KSCO: Korean national employment weights at the finest level available;
-  equal weights as the fallback.
+- Fine KSCO → coarse KSCO: Korean national employment weights at the finest level available
+  (minor groups, `DT_1ES3B32J`); equal weights within minor groups.
+- Still to fix in a Phase 5 ADR: SOC 2018 → 2010 splits and merges, the 12 OEWS aggregate codes,
+  KSCO-8 unit 8631 (no ISCO-08 link), and the KSSC one-to-one rules as a sensitivity.
 
 Invariants, unit-tested:
 
@@ -226,7 +229,8 @@ approve peer sets (ADR); approve Phase 2.
 
 ### Phase 2 — AEI ingestion and replication (≈3–5 h)
 
-- 2.1 Fetchers for the four releases and `labor_market_impacts`, checksummed.
+- 2.1 Fetchers for the four releases, `labor_market_impacts`, and Anthropic's 2024 working-age
+  population files, pinned to Hugging Face commit `4e5f69fa…` and checksummed.
 - 2.2 Schema adapters to one canonical long table (Parquet) with columns `release`,
   `period_start`, `period_end` (exclusive), `geo_level` ∈ {global, country, subregion}, `geo_id`
   (ISO-3 for countries, ISO 3166-2 for regions), `facet`, `hierarchy_level`, `node_id`,
@@ -235,7 +239,9 @@ approve peer sets (ADR); approve Phase 2.
 - 2.3 Korean region dimension table: ISO code, Korean name, English name, KOSIS code or codes. A
   test covers all 17 regions.
 - 2.4 Replication tests, marked `data`. Tolerances: ±0.05 for indices, ±0.1 pp for shares, exact
-  for ranks.
+  for ranks, each checked against the published value's own basis (ADR 0006). For values
+  published to one decimal, the rank is checked exactly and a level gap is documented with its
+  cause, never tuned away.
   - Korea AUI 3.73, rank 5 (August 2025; September 2025 report).
   - Korea AUI 3.12, rank 7 of 116 (November 2025; January 2026 online appendix, Fig. 3).
   - Korea AUI above 3.5 (February 2026; Anthropic's May 2026 announcement).
@@ -250,11 +256,15 @@ are logged in `docs/PROJECT_STATUS.md`.
 
 ### Phase 3 — National profile, RQ1 (≈3–4 h)
 
-- 3.1 Peer sets, fixed by ADR. Proposed:
-  - P1, Asia-Pacific advanced economies with data: Japan, Singapore, Taiwan, Australia, New
-    Zealand.
-  - P2, high-adoption economies: AUI > 1 and at least 200 conversations.
-  - P3, all countries with at least 200 conversations.
+- 3.1 Peer sets (ADR 0003):
+  - P1a, Asia-Pacific advanced economies: Japan, Singapore, Taiwan, Australia, New Zealand.
+  - P1b, BIS Asian Consultative Council economies with data: Australia, India, Indonesia, Japan,
+    Malaysia, New Zealand, the Philippines, Singapore, Thailand.
+  - P2, high-adoption economies: AUI > 1 and at least 200 conversations (for release 2026-06-26,
+    published that month).
+  - P3, all countries with at least 200 conversations (same rule for 2026-06-26).
+  - P4, size-matched: the ten countries closest to Korea in share of global usage, for facet
+    metrics whose coverage grows with sample size.
 - 3.2 M9 for Korea against peers in each release. Time series of share, AUI, and rank across the
   five snapshots, with method changes flagged.
 - 3.3 Figures F1–F4 and table T1.
@@ -345,7 +355,7 @@ Brief outline (headings only; the owner writes the text):
 | --- | --- |
 | Regional pattern driven by IP geolocation or commuting | Stability checks; workplace-based denominator; capital-region aggregate; non-capital rankings; explicit caveat |
 | Crosswalk noise | Alternative weights; coverage audit; robustness rule fixed in §7 |
-| Regional occupation data too coarse | Tier T2 (MDIS), or results at the coarse level with the limitation stated |
+| Regional occupation data too coarse | Results at the KSCO-8 sub-major level, with the limitation stated (MDIS is no finer by region; ADR 0004) |
 | AEI schema changes between releases | One adapter per release, each with fixture tests |
 | Seventeen observations | Descriptive framing; N reported everywhere |
 | Overlap with the Bank of Korea issue note | Usage-first framing; citation; explicit comparison |
