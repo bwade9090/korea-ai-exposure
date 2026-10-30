@@ -1,14 +1,14 @@
 """Figures of the brief (PLAN §9), one function per figure, in the project's shared style:
 matplotlib, the Okabe-Ito colour-blind-safe palette, English labels. ``main`` saves each figure
 as PNG and SVG in ``outputs/figures`` and writes the captions (period and source) to
-``outputs/figures/captions.md``. Phase 3 adds F1-F4 (RQ1)."""
+``outputs/figures/captions.md``. Phase 3 adds F1-F4 (RQ1), Phase 4 F5-F7 (RQ2)."""
 
 import matplotlib
 import pandas as pd
 from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
 
-from korea_ai_exposure import aui, national, paths
+from korea_ai_exposure import aui, national, paths, regional, regions
 
 FIGURES = paths.OUTPUTS / "figures"
 COLORS = {  # Okabe and Ito (2008), colour-blind safe
@@ -177,7 +177,114 @@ def f4_gaps(soc: pd.DataFrame, requests: pd.DataFrame, top: int = 5) -> tuple[Fi
     return fig, caption
 
 
+def f5_index(tables: dict[str, pd.DataFrame]) -> tuple[Figure, str]:
+    """F5: within-Korea usage index by region in the latest month, earlier snapshots as markers."""
+    latest = tables[regional.HEADLINE.label]["index_population"].sort_values()
+    fig = Figure(figsize=(6.4, 4.8), layout="constrained")
+    ax = fig.subplots()
+    y = list(range(len(latest)))
+    ax.barh(y, latest, height=0.6, color=KOREA_COLOR, label=regional.HEADLINE.label)
+    for (label, table), marker in zip(list(tables.items())[:-1], "osD", strict=True):
+        earlier = table["index_population"].reindex(latest.index)
+        ax.scatter(
+            earlier,
+            y,
+            marker=marker,
+            s=20,
+            facecolors="none",
+            edgecolors="black",
+            label=label,
+            zorder=3,
+        )
+    ax.axvline(1, color=COLORS["grey"], linestyle="--", linewidth=0.8)
+    ax.set_yticks(y, [regions.by_iso(code).name for code in latest.index])
+    ax.set_xlabel("Share of usage over share of residents aged 15-64 (1 = parity)")
+    ax.legend(loc="lower right")
+    sources = ", ".join(dict.fromkeys(s.source for s in regional.SNAPSHOTS))
+    caption = (
+        "Within-Korea usage index by region: the region's share of Korean Claude.ai "
+        "conversations over its share of residents aged 15-64 at month end (resident "
+        "registration, foreign residents excluded); 1 means parity. Bars: May 2026; markers: "
+        "November 2025, February 2026 and April 2026. Usage is located by IP address, which can "
+        "shift it toward Seoul through commuting, gateways and VPNs; the headline denominator "
+        f"is chosen at Checkpoint B. N = 17. Sources: {sources}; {regional.SOURCES['population']}."
+    )
+    return fig, caption
+
+
+def f6_capital(capital: pd.DataFrame) -> tuple[Figure, str]:
+    """F6: the capital region against the rest: shares of usage, population and employment."""
+    headline = capital.loc[regional.HEADLINE.label]
+    bars = [(f"Usage, {label}", row.usage_share) for label, row in capital.iterrows()]
+    bars += [
+        ("Residents aged 15-64", headline.population_share),
+        ("Workers by workplace", headline.workers_share),
+        ("Employed by residence", headline.employed_share),
+    ]
+    fig = Figure(figsize=(6.4, 3.2), layout="constrained")
+    ax = fig.subplots()
+    y = list(range(len(bars)))[::-1]
+    shares = [share for _, share in bars]
+    ax.barh(y, shares, height=0.6, color=KOREA_COLOR, label="Seoul, Gyeonggi, Incheon")
+    ax.barh(
+        y,
+        [100 - s for s in shares],
+        left=shares,
+        height=0.6,
+        color=COLORS["grey"],
+        label="Other 14 regions",
+    )
+    for yi, share in zip(y, shares, strict=True):
+        ax.text(share / 2, yi, f"{share:.1f}", ha="center", va="center", color="white")
+    ax.set_yticks(y, [name for name, _ in bars])
+    ax.set_xlim(0, 100)
+    ax.set_xlabel("Percent of Korea")
+    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.18), ncol=2)
+    caption = (
+        "The capital region (Seoul, Gyeonggi, Incheon) against the other 14 regions: share of "
+        "Korean Claude.ai conversations in each regional snapshot, and shares of residents aged "
+        "15-64 (May 2026), workers by workplace region (establishment survey, employees of "
+        "industries B-S, May 2026) and employed persons by residence (지역별고용조사, first half "
+        f"of 2026). Sources: AEI-2026-01, AEI-2026-03, AEI-2026-06; "
+        f"{', '.join(dict.fromkeys(regional.SOURCES[d] for d in regional.DENOMINATORS))}."
+    )
+    return fig, caption
+
+
+def f7_grdp(table: pd.DataFrame, grdp: pd.Series, association: dict) -> tuple[Figure, str]:
+    """F7: usage index against GRDP per capita, 17 regions."""
+    x = grdp.reindex(table.index) / 1000
+    fig = Figure(figsize=(6.0, 4.2), layout="constrained")
+    ax = fig.subplots()
+    ax.scatter(x, table["index_population"], s=28, color=KOREA_COLOR, zorder=3)
+    for code, xi, yi in zip(table.index, x, table["index_population"], strict=True):
+        ax.annotate(
+            regions.by_iso(code).name,
+            (xi, yi),
+            xytext=_LABEL_OFFSETS.get(code, (4, 2)),
+            textcoords="offset points",
+            fontsize=6.5,
+        )
+    ax.set_yscale("log")
+    ax.minorticks_off()
+    ax.set_yticks([0.2, 0.5, 1, 2, 4], ["0.2", "0.5", "1", "2", "4"])
+    ax.axhline(1, color=COLORS["grey"], linestyle="--", linewidth=0.8)
+    ax.set_xlabel("GRDP per capita, 2024 (million won, current prices)")
+    ax.set_ylabel("Usage index, May 2026 (log scale)")
+    rho, n = association["rho"], association["n"]
+    ax.set_title(f"Spearman's rho = {rho:.2f}, N = {n}")
+    caption = (
+        "Within-Korea usage index (May 2026; share of usage over share of residents aged 15-64) "
+        "against GRDP per capita (2024, preliminary, current prices), 17 regions; log scale for "
+        f"the index. Spearman's rho = {rho:.2f} (N = {n}): an association, not an effect. "
+        f"Sources: {regional.HEADLINE.source}; {regional.SOURCES['population']}; "
+        f"{regional.SOURCES['grdp']}."
+    )
+    return fig, caption
+
+
 _ANNOTATION = {"textcoords": "offset points", "ha": "center", "va": "bottom", "fontsize": 6.5}
+_LABEL_OFFSETS = {"KR-49": (4, -9)}  # F7: Jeju's label would cover Gwangju's
 
 
 def _economies(
@@ -214,11 +321,19 @@ def main() -> int:
     headline = frames[national.HEADLINE.label]
     profile = national.profile(headline)
     peers = national.peer_sets(headline, population)
+    tables = regional.regional_tables(frames)
     drawings = {
         "F1": lambda: f1_series(national.series(frames, population)),
         "F2": lambda: f2_mix(profile, peers),
         "F3": lambda: f3_traits(profile, peers),
         "F4": lambda: f4_gaps(national.soc_mix(headline), national.request_mix(headline)),
+        "F5": lambda: f5_index(tables),
+        "F6": lambda: f6_capital(regional.capital_shares(tables)),
+        "F7": lambda: f7_grdp(
+            tables[regional.HEADLINE.label],
+            regional.grdp_per_capita(),
+            regional.grdp_association(tables[regional.HEADLINE.label]),
+        ),
     }
     FIGURES.mkdir(parents=True, exist_ok=True)
     captions = []
