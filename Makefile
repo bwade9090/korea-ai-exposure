@@ -47,8 +47,15 @@ build: fetch
 replicate: fetch
 	$(VENV_PY) -m korea_ai_exposure.replication
 
-# Implemented in later phases (docs/PLAN.md section 8); until then they fail.
-figures facts brief:
+# Figures and facts read data/interim/aei_long.parquet, which make build writes.
+figures:
+	$(VENV_PY) -m korea_ai_exposure.figures
+
+facts:
+	$(VENV_PY) -m korea_ai_exposure.facts
+
+# Phase 6 (docs/PLAN.md section 8); until then it fails.
+brief:
 	@echo "make $@: not implemented yet (see docs/PLAN.md section 8)"; exit 1
 
 all: build figures facts brief
