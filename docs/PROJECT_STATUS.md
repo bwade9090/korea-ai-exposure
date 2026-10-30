@@ -9,7 +9,10 @@ Last updated: 2026-10-30
   `data/processed/regions.csv`, also from a clean clone. Replication: 38 pass, 0 fail, 1 not run
   (the optional Australian state indices); the table is in `docs/replication.md`, and
   `make replicate` regenerates it.
-- **Phase 3 — national profile (RQ1): next.**
+- Phase 3 — national profile (RQ1): complete (2026-10-30). `make figures` draws F1–F4 with
+  captions; `make facts` writes `outputs/facts.json` (336 facts) and T1. Outputs are
+  deterministic and stay in `outputs/` (untracked).
+- **Phase 4 — regional usage (RQ2): next.**
 - Checkpoint A approved 2026-10-30 (below).
 - The repository is public by the owner's decision of 2026-10-29 (ADR 0002 amendment), so every
   push publishes. `outputs/` stays untracked until Checkpoint C.
@@ -17,13 +20,17 @@ Last updated: 2026-10-30
 
 ## Next action
 
-Phase 3 (`docs/PLAN.md` §8): build the peer sets of ADR 0003 (3.1); compute M9 for Korea against
-each peer set in each release, and the series of share, AUI and rank across the five snapshots,
-with method changes flagged (3.2); then figures F1–F4 and table T1 (3.3). Figures, tables and
-`facts.json` go to `outputs/`, which stays untracked until Checkpoint C.
+Phase 4 (`docs/PLAN.md` §8): denominators for each snapshot month (4.1, ADR 0005), once the
+KOSIS retrieval below is decided; then M2–M4 for the four regional snapshots (4.2), stability
+(4.3), capital-region aggregates (4.4), regional facets (4.5), the GRDP association (4.6), and
+F5–F7 and T2 (4.7).
 
 ## Open decisions
 
+- Phase 4.1, KOSIS retrieval: the OpenAPI key goes in the query string, which the fetcher
+  refuses to pin. Phase 1 proposed a KOSIS path that adds the key at request time and pins the
+  redacted query; the Proportionality rules freeze fetch. Options: that small path, or the owner
+  exports the tables into `data/manual/`.
 - Checkpoint B, after Phase 4: regional measurement validity (IP geolocation, commuting,
   instability) and the headline denominator (ADR).
 - Before Phase 5: the primary exposure measure for RQ4 (ADR; Anthropic's observed exposure is
@@ -53,6 +60,18 @@ One line each; ADRs only for choices that change results (`CLAUDE.md`, Proportio
 
 - 2026-10-30: code reads the KOSIS key as `KOSIS_KEY`, the name in the owner's `.env` (older
   docs say `KOSIS_API_KEY`).
+- 2026-10-30: P2 uses the headline AUI; P4 is the ten nearest countries in published
+  `usage_pct`, ties by country code; Korea is excluded from every peer set.
+- 2026-10-30: for April–May 2026 the headline AUI is the published value (ADR 0006 item 4b);
+  recomputing it from shares rounded to two decimals moves Korea from 14th to 13th in May.
+- 2026-10-30: use cases are shares of work, personal and coursework; collaboration buckets and
+  patterns are shares of the five patterns, which reproduces Anthropic's buckets (largest gap
+  1e-14 in August 2025, 0.011 in May 2026); SOC, request-topic and artifact mixes are shares of
+  published, classified rows. A metric with an unpublished input is missing, not zero.
+- 2026-10-30: task concentration is the share of all conversations in the 100 largest published
+  O*NET tasks, compared with P4.
+- 2026-10-30: F2 and F3 show the P1a and P1b economies one by one; F4 shows every SOC major
+  group and the five largest gaps each way among the major request topics (level 2).
 
 ## Blockers
 

@@ -57,6 +57,10 @@ Schema notes:
   and differs from a missing row. Detailed SOC nodes use O*NET-SOC 2019 codes (for example
   `15-1299.03`); SOC major groups use two-digit IDs. Always filter on `metric_id`, and join O*NET
   tasks on `node_external_id` (task statements are not unique).
+- AEI-2026-06 units (its `data_documentation.md`): `ai_autonomy_mean` on a 1–5 scale, education
+  in years, `human_only_time_mean` in hours, `human_with_ai_time_mean` in minutes, `*_pct` in
+  percent. Request levels are 0 detailed, 1 minor, 2 major. The weekly releases document no
+  units, and their trait levels differ (ADR 0006).
 - Korean regions appear as KR-11 … KR-50 in ISO 3166-2, including KR-42 Gangwon, KR-45 Jeonbuk,
   KR-49 Jeju, and KR-50 Sejong.
 - `job_exposure.csv` uses SOC 2018 codes: 2018-only codes such as `15-1252` and `15-2051` are
