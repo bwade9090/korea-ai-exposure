@@ -17,6 +17,11 @@ Canonical columns (``COLUMNS``):
 Facet and metric names stay as published: they differ between releases because the methods do
 (ADR 0006). The weekly releases have no node IDs, so ``node_id`` repeats the cluster name. Rows
 about a whole geography have an empty ``node_id`` in every release.
+
+A missing row means "not published", never zero (CLAUDE.md). The enriched file of release
+2025-09-15 adds every country with a population but no published usage, with zero usage values
+(28 countries); their usage rows are dropped, and their population and GDP rows kept. The raw
+files publish no count below 15, so a zero count can only come from that fill.
 """
 
 from dataclasses import dataclass
@@ -76,12 +81,20 @@ _WEEKLY_GEOGRAPHY = {
     "country-state": "subregion",
     "state_us": "subregion",
 }
-# Facets that hold whole-geography values (usage_count, usage_pct, usage_per_capita_index, ...).
-_GEO_FACETS = {
-    "global": ("country", "overall"),
-    "country": ("country", "overall"),
-    "subregion": ("country-state", "state_us", "overall"),
-}
+CANONICAL_KEY = [
+    "release",
+    "period_start",
+    "geo_level",
+    "geo_id",
+    "facet",
+    "hierarchy_level",
+    "metric",
+    "node_id",
+]
+# Usage metrics that the 2025-09-15 enrichment fills with zeros for countries without usage.
+_ZERO_FILLED_METRICS = frozenset(
+    {"usage_count", "usage_pct", "usage_per_capita", "usage_per_capita_index", "usage_tier"}
+)
 
 
 @dataclass(frozen=True)
@@ -136,9 +149,10 @@ def get_release(name: str) -> Release:
     raise KeyError(f"unknown AEI release {name!r}")
 
 
-def iso2_to_iso3(path: Path = ISO_CODES) -> dict[str, str]:
+def iso2_to_iso3(path: Path | None = None) -> dict[str, str]:
     """ISO 3166-1 alpha-2 to alpha-3, from the table shipped with release 2025-09-15. Read with
     ``keep_default_na=False``: Namibia's code is ``NA``."""
+    path = path or ISO_CODES
     table = pd.read_csv(path, keep_default_na=False, dtype=str)
     mapping = dict(zip(table["iso_alpha_2"], table["iso_alpha_3"], strict=True))
     if len(mapping) != len(table):
@@ -166,7 +180,7 @@ def read_weekly(path: Path, release: str, iso_map: dict[str, str]) -> pd.DataFra
     end = pd.to_datetime(raw["date_end"], format="%Y-%m-%d")
     if not ((end - start) == pd.Timedelta(days=7)).all():
         raise ValueError(f"{path}: expected one-week windows (date_end = date_start + 7 days)")
-    return pd.DataFrame(
+    frame = pd.DataFrame(
         {
             "release": release,
             "period_start": raw["date_start"],
@@ -181,6 +195,18 @@ def read_weekly(path: Path, release: str, iso_map: dict[str, str]) -> pd.DataFra
             "value": pd.to_numeric(raw["value"], errors="raise"),
         }
     )
+    return _drop_zero_fill(frame)
+
+
+def _drop_zero_fill(frame: pd.DataFrame) -> pd.DataFrame:
+    """Drop the usage rows of geographies whose whole-geography usage count is zero: unpublished,
+    not zero (see the module docstring)."""
+    zero = (frame["node_id"] == "") & (frame["metric"] == "usage_count") & (frame["value"] == 0)
+    filled = frame.loc[zero, "geo_id"].unique()
+    if len(filled) == 0:
+        return frame
+    drop = frame["geo_id"].isin(filled) & frame["metric"].isin(_ZERO_FILLED_METRICS)
+    return frame[~drop].reset_index(drop=True)
 
 
 def read_monthly(path: Path, release: str) -> pd.DataFrame:
@@ -207,9 +233,14 @@ def read_monthly(path: Path, release: str) -> pd.DataFrame:
     )
 
 
-@cache
 def load(name: str) -> pd.DataFrame:
-    """One release in canonical form. Cached and shared: callers must not modify it."""
+    """One release in canonical form. The parsed release is cached; each call returns a shallow
+    copy, which (under pandas copy-on-write) shares the data but keeps caller edits local."""
+    return _load(name).copy(deep=False)
+
+
+@cache
+def _load(name: str) -> pd.DataFrame:
     release = get_release(name)
     if release.schema == "weekly":
         frame = read_weekly(release.file, release.release, iso2_to_iso3())
@@ -226,17 +257,20 @@ def load_all() -> pd.DataFrame:
 def geo_values(
     frame: pd.DataFrame, geo_level: str, metric: str, period_start: str | None = None
 ) -> pd.Series:
-    """Whole-geography values of ``metric`` (for example ``usage_count``, ``usage_pct``,
-    ``usage_per_capita_index``) in one release's canonical frame, indexed by ``geo_id``. A
-    release with several periods (2026-06-26) needs ``period_start``."""
+    """Whole-geography values (empty ``node_id``) of ``metric``, for example ``usage_count``,
+    ``usage_pct``, ``usage_per_capita_index`` or ``ai_autonomy_mean``, in one release's canonical
+    frame, indexed by ``geo_id``. A release with several periods (2026-06-26) needs
+    ``period_start``. Raises ``ValueError`` when nothing matches. Categorical metrics of the
+    weekly releases (``human_only_ability_pct``, ``multitasking_pct``) have one row per category
+    and no whole-geography row; select their category node instead."""
     rows = frame[
-        (frame["geo_level"] == geo_level)
-        & frame["facet"].isin(_GEO_FACETS[geo_level])
-        & (frame["metric"] == metric)
-        & (frame["node_id"] == "")
+        (frame["geo_level"] == geo_level) & (frame["metric"] == metric) & (frame["node_id"] == "")
     ]
     if period_start is not None:
         rows = rows[rows["period_start"] == period_start]
+    if rows.empty:
+        when = f" in {period_start}" if period_start else ""
+        raise ValueError(f"no whole-geography {metric} rows at {geo_level} level{when}")
     if rows["period_start"].nunique() > 1:
         raise ValueError(f"{metric}: several periods; pass period_start")
     if rows["geo_id"].duplicated().any():
@@ -269,8 +303,10 @@ def check_long(frame: pd.DataFrame) -> None:
 def build(path: Path = LONG_TABLE) -> pd.DataFrame:
     """Write every release in canonical form to ``path`` (Parquet), sorted deterministically."""
     frame = load_all()
-    order = ["release", "period_start", "geo_level", "geo_id", "facet", "hierarchy_level"]
-    frame = frame.sort_values([*order, "metric", "node_id"], kind="stable", ignore_index=True)
+    check_long(frame)
+    if frame.duplicated(CANONICAL_KEY).any():
+        raise ValueError(f"the canonical key {CANONICAL_KEY} is not unique")
+    frame = frame.sort_values(CANONICAL_KEY, kind="stable", ignore_index=True)
     path.parent.mkdir(parents=True, exist_ok=True)
     frame.to_parquet(path, index=False)
     return frame

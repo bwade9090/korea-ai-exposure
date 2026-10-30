@@ -163,3 +163,122 @@ def test_every_release_file_is_pinned_under_its_source_id():
     for release in aei.RELEASES:
         assert pins.get(release.path) == release.source
     assert pins.get(aei.ISO_CODES.relative_to(paths.RAW).as_posix()) == "AEI-2025-09"
+
+
+def test_geo_values_reads_whole_geography_rows_of_any_facet(tmp_path):
+    path = weekly(
+        tmp_path,
+        f"GLOBAL,global,{WEEK},ai_autonomy,0,ai_autonomy_mean,,3.38",
+        f"KR,country,{WEEK},ai_autonomy,0,ai_autonomy_mean,,3.29",
+        f"KR-11,country-state,{WEEK},ai_autonomy,0,ai_autonomy_mean,,3.30",
+        f"KR,country,{WEEK},human_only_ability,0,human_only_ability_pct,yes,40.0",
+    )
+    frame = aei.read_weekly(path, "2026-01-15", ISO)
+    assert aei.geo_values(frame, "global", "ai_autonomy_mean").to_dict() == {"GLOBAL": 3.38}
+    assert aei.geo_values(frame, "country", "ai_autonomy_mean").to_dict() == {"KOR": 3.29}
+    assert aei.geo_values(frame, "subregion", "ai_autonomy_mean").to_dict() == {"KR-11": 3.30}
+    with pytest.raises(ValueError, match="no whole-geography"):
+        aei.geo_values(frame, "country", "human_only_ability_pct")  # categorical: select a node
+    with pytest.raises(ValueError, match="no whole-geography"):
+        aei.geo_values(frame, "country", "ai_autonomy_maen")
+
+
+def test_zero_filled_usage_is_dropped_but_population_kept(tmp_path):
+    path = weekly(
+        tmp_path,
+        f"ASM,country,{WEEK},country,0,usage_count,,0",
+        f"ASM,country,{WEEK},country,0,usage_pct,,0",
+        f"ASM,country,{WEEK},country,0,usage_per_capita_index,,0",
+        f"ASM,country,{WEEK},country,0,usage_tier,Minimal,0",
+        f"ASM,country,{WEEK},country,0,working_age_pop,,30373",
+        f"KR,country,{WEEK},country,0,usage_count,,30",
+        f"KR,country,{WEEK},country,0,working_age_pop,,36307699",
+    )
+    frame = aei.read_weekly(path, "2025-09-15", ISO)
+    kept = sorted(zip(frame["geo_id"], frame["metric"], strict=True))
+    assert kept == [
+        ("ASM", "working_age_pop"), ("KOR", "usage_count"), ("KOR", "working_age_pop"),
+    ]  # fmt: skip
+
+
+def test_korean_regions_in_weekly_and_monthly_frames(tmp_path):
+    from korea_ai_exposure import replication
+
+    path = weekly(
+        tmp_path,
+        f"KR-11,country-state,{WEEK},country-state,0,usage_pct,,58.2",
+        f"KR-26,country-state,{WEEK},country-state,0,usage_pct,,3.5",
+        f"US-CA,country-state,{WEEK},country-state,0,usage_pct,,15.0",
+    )
+    weekly_frame = aei.read_weekly(path, "2026-01-15", ISO)
+    assert replication.korean_regions(weekly_frame, "usage_pct").to_dict() == {
+        "KR-11": 58.2, "KR-26": 3.5,
+    }  # fmt: skip
+    monthly_frame = pd.concat(
+        [
+            canonical(geo_level="subregion", geo_id="KR-11", value=63.65),
+            canonical(geo_level="subregion", geo_id="JP-13", value=40.0),
+        ],
+        ignore_index=True,
+    )
+    regions = replication.korean_regions(monthly_frame, "usage_pct", "2026-05-01")
+    assert regions.to_dict() == {"KR-11": 63.65}
+
+
+@pytest.fixture
+def synthetic_releases(tmp_path, monkeypatch):
+    """Two tiny releases in the real schemas, installed in place of the pinned ones."""
+    raw = tmp_path / "raw"
+    (raw / "w").mkdir(parents=True)
+    (raw / "m").mkdir()
+    (raw / "w" / "weekly.csv").write_text(
+        WEEKLY
+        + f"KR,country,{WEEK},country,0,usage_pct,,3.06\n"
+        + f"GLOBAL,global,{WEEK},country,0,usage_count,,1000\n"
+        + f"KR,country,{WEEK},country,0,usage_count,,30\n",
+        encoding="utf-8",
+    )
+    (raw / "m" / "monthly.csv").write_text(
+        MONTHLY
+        + "2026-05-01,2026-06-01,KOR,country,overall,0,usage_pct,3.24,Overall,-\n"
+        + "2026-04-01,2026-05-01,KOR,country,overall,0,usage_pct,3.19,Overall,-\n",
+        encoding="utf-8",
+    )
+    iso = raw / "iso.csv"
+    iso.write_text("iso_alpha_2,iso_alpha_3,country_name\nKR,KOR,Korea\n", encoding="utf-8")
+    monkeypatch.setattr(paths, "RAW", raw)
+    monkeypatch.setattr(aei, "ISO_CODES", iso)
+    monkeypatch.setattr(
+        aei,
+        "RELEASES",
+        (
+            aei.Release("2026-01-15", "AEI-2026-01", "w/weekly.csv", "weekly", "test"),
+            aei.Release("2026-06-26", "AEI-2026-06", "m/monthly.csv", "monthly", "test"),
+        ),
+    )
+    aei._load.cache_clear()
+    yield
+    aei._load.cache_clear()
+
+
+@pytest.mark.usefixtures("synthetic_releases")
+def test_load_returns_a_copy_that_callers_may_change():
+    first = aei.load("2026-06-26")
+    first.loc[first["metric"] == "usage_pct", "value"] = 999.0
+    first["extra"] = 1
+    second = aei.load("2026-06-26")
+    assert tuple(second.columns) == aei.COLUMNS
+    assert sorted(second["value"]) == [3.19, 3.24]
+
+
+@pytest.mark.usefixtures("synthetic_releases")
+def test_build_writes_a_sorted_validated_parquet_table(tmp_path):
+    path = tmp_path / "long.parquet"
+    frame = aei.build(path)
+    back = pd.read_parquet(path)
+    assert tuple(back.columns) == aei.COLUMNS
+    assert len(back) == 5
+    assert back.equals(frame)
+    assert list(back["release"]) == ["2026-01-15"] * 3 + ["2026-06-26"] * 2
+    assert list(back["period_start"].iloc[3:]) == ["2026-04-01", "2026-05-01"]
+    assert not back.duplicated(aei.CANONICAL_KEY).any()
