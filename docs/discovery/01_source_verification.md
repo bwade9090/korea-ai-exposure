@@ -1,7 +1,7 @@
 # Phase 1 — Source verification
 
 - Date: 2026-10-29. Scope: `docs/PLAN.md` §8, tasks 1.1–1.6. Prior art (1.7) is in
-  [`02_prior_art.md`](02_prior_art.md); full checksums are in [`01a_checksums.md`](01a_checksums.md).
+  [`02_prior_art.md`](02_prior_art.md); the files used are pinned in `data/manifest.json`.
 - Method: ten verification passes, one per source block. Six independent skeptics then re-derived
   the claims behind the Checkpoint A decisions with their own code, and a completeness critic
   checked the result against the Phase 1 task list. Their corrections are folded in below. No
@@ -63,7 +63,7 @@
 | AEI-APX | `release_2026_01_15/aei_v4_appendix.pdf` | 6,036,245 | 19 pages |
 
 Every LFS file's SHA-256 equals its `lfs.oid` in the tree API; small files are plain git blobs,
-whose SHA-256 comes from the download. Full hashes: `01a_checksums.md`.
+whose SHA-256 comes from the download.
 
 ### AEI-2025-09 (4–11 August 2025)
 

@@ -4,109 +4,58 @@ Last updated: 2026-10-30
 
 ## Current state
 
-- Phases 0–2 are complete. The AEI files are pinned at Hugging Face commit `4e5f69fa…`;
-  `make build` writes the canonical table (`data/interim/aei_long.parquet`, 2,709,773 rows) and
-  `data/processed/regions.csv`, also from a clean clone. Replication: 38 pass, 0 fail, 1 not run
-  (the optional Australian state indices); the table is in `docs/replication.md`, and
-  `make replicate` regenerates it.
-- Phase 3 — national profile (RQ1): complete (2026-10-30). `make figures` draws F1–F4 with
-  captions; `make facts` writes `outputs/facts.json` (336 facts) and T1. Outputs are
-  deterministic and stay in `outputs/` (untracked).
-- Phase 4 — regional usage (RQ2): complete (2026-10-30). Six KOSIS tables are pinned through the
-  fetcher's key path (`key_env: KOSIS_KEY`); `make build` also writes
-  `data/processed/denominators.csv`; `make figures` adds F5–F7 and `make facts` adds T2 and the
-  RQ2 facts (620 facts in all).
-- Checkpoint B approved 2026-10-30 (below); ADR 0008 accepted.
-- Phase 5 — composition versus adoption (RQ3–RQ4): complete (2026-10-30), with D1–D5 as decided
-  by the owner (ADR 0009; Choices). Nine more inputs are pinned; `crosswalk.py` maps the three
-  occupation measures to KSCO-8 sub-major groups and `decomposition.py` computes M6–M8, the
-  comparison with the Bank of Korea's rank orders and the robustness checks; `make figures`
-  adds F8–F9 and `make facts` adds T3 and the RQ3–RQ4 facts. Results stay in `outputs/`
-  (untracked) until Checkpoint C.
-- **Phase 6 — brief (owner-led): next.**
-- Checkpoint A approved 2026-10-30 (below).
-- The repository is public by the owner's decision of 2026-10-29 (ADR 0002 amendment), so every
-  push publishes. `outputs/` stays untracked until Checkpoint C.
-- The Proportionality rules in `CLAUDE.md` apply from 2026-10-30.
+- Phases 0–5 are complete; Checkpoints A and B are approved (below). `make build`, `make figures`
+  and `make facts` run from 24 pinned inputs; the results (F1–F9, T1–T3, `outputs/facts.json`)
+  stay in `outputs/`, untracked until Checkpoint C. Replication of published values:
+  `docs/replication.md`. Methodology draft: `report/methodology.md`.
+- **Phase 6 — brief (owner-led): in progress.**
+- The repository is public (ADR 0002 amendment), so every push publishes.
 
 ## Next action
 
-Phase 6 (`docs/PLAN.md` §8, owner-led): the owner drafts the brief's narrative from
-`outputs/facts.json`, the figures (captions in `outputs/figures/captions.md`) and T1–T3; Claude
-writes the methodology section and edits prose on request. Under the Proportionality rules
-`facts.json` stays and there is no brief renderer. Then one independent check of every number in
-the brief against its source, and Checkpoint C.
+The owner drafts the brief's narrative from `outputs/facts.json`, the figures (captions in
+`outputs/figures/captions.md`) and T1–T3; Claude edits prose on request and fits the methodology
+to the brief. Then one independent check of every number in the brief against its source, and
+Checkpoint C (ADR 0002, items 1–5).
 
 ## Open decisions
 
-- Checkpoint C: publication, after the ADR 0002 review of findings.
+- Checkpoint C: publication, after the ADR 0002 review.
 
 ## Owner actions
 
-- [ ] Rotate the KOSIS OpenAPI key. Its value appears once in a local Claude session log of the
-      Phase 1 verification; it is in no tracked file and no commit.
-- [ ] Optional: to run the pipeline from your own terminal, install CPython 3.12 next to 3.13
-      (`winget install Python.Python.3.12`) and rebuild `.venv` with `make setup` (GNU Make is
-      at `C:\rtools45\usr\bin\make.exe`). The current `.venv` uses a Python that exists only
-      inside the Claude app.
-- [ ] Optional: ask Anthropic (econ-research@anthropic.com) about the data licence (CC-BY in the
-      card text, MIT in its metadata) and whether April 2026 is a partial month.
-- [ ] Optional: ask the Bank of Korea for approval to reuse values from the issue note's figures
-      (ADR 0007).
+- [ ] Rotate the KOSIS OpenAPI key: it appeared once in a local session log (no file, no commit).
 - [ ] ADR 0002 review before any public release of findings.
+- [ ] Optional: install CPython 3.12 next to 3.13 (`winget install Python.Python.3.12`) and run
+      `make setup`, to rebuild outside the Claude app (GNU Make: `C:\rtools45\usr\bin\make.exe`).
+- [ ] Optional: ask Anthropic about the data licence (CC BY in the card text, MIT in its metadata)
+      and whether April 2026 is a partial month; ask the Bank of Korea about reusing values from
+      its figures (ADR 0007).
 
 ## Choices
 
-One line each; ADRs only for choices that change results (`CLAUDE.md`, Proportionality).
+One line each; choices that change results are ADRs 0001–0009.
 
-- 2026-10-30: code reads the KOSIS key as `KOSIS_KEY`, the name in the owner's `.env`.
-- 2026-10-30 (owner): KOSIS tables come through a fetcher path that adds `KOSIS_KEY` at request
-  time and pins the URL without it; keyed requests follow no redirect to another host, and a
-  KOSIS error object is refused.
-- 2026-10-30: M4 uses the work share of classified use cases; in February 2026, where coursework
-  is unpublished for Ulsan and Jeju, every region uses its work share of all conversations.
-- 2026-10-30: intervals for regional shares are Wilson 95% intervals from conversation counts
-  (weekly releases only), carried to the index with the denominator taken as exact.
-- 2026-10-30: the GRDP association (4.6) uses GRDP per capita 2024 (preliminary), the latest
-  published; 2025 is due in December 2026.
-- 2026-10-30: regional facets (4.5) keep the metrics published for all 17 regions; task
-  concentration is left out (sparse regional task breakdowns).
-- 2026-10-30 (owner, D2): M5(a) uses the USA's detailed-SOC shares in release 2026-06-26, May
-  2026 (O*NET-SOC 2019 truncated to SOC 2018), over OEWS national employment shares; global
-  shares are the sensitivity.
-- 2026-10-30 (owner, D3): occupations without a value are left out, weights renormalized over the
-  rest, and coverage reported at each step; never zero (observed exposure's 411 zeros are values).
-- 2026-10-30 (owner, D4): OEWS May 2025, national and state; suppressed state cells are left out,
-  with each state's coverage reported.
-- 2026-10-30 (owner, D5): a SOC 2018 code split across SOC 2010 codes divides its employment
-  equally; each OEWS aggregate is one unit (usage share summed, exposure averaged equally, ISCO
-  links pooled over its components); KSCO-8 unit 8631 gets no value; the KSSC one-to-one rules
-  are a sensitivity (PLAN §7: rank rho below 0.9 is not robust).
-- 2026-10-30: the one-to-one sensitivity takes the first ISCO link listed for each KSCO unit, a
-  mechanical stand-in for the KSSC/ILO rules, which need judgment.
-- 2026-10-30: the five OEWS-specific aggregates take their components from the OEWS occupation
-  definitions (a constant in `crosswalk.py`), the seven broad-code aggregates from the SOC
-  structure; BLS links to 3-digit ISCO groups and the KSCO armed-forces units fall outside the
-  unit-group chain, and the audit table lists what drops out.
-- 2026-10-30: M5(a) keeps its definition although occupations with few wage-and-salary workers
-  and common conversation topics get extreme usage per worker (AEI classifies content, not
-  users' occupations); T3 reports the observed-exposure and ILO intensities as variants.
-- 2026-10-30: US state work usage is each state's usage share times its work share, May 2026,
-  for the 50 states and DC; the ILO scores are used unadjusted (no complementarity adjustment).
-- 2026-10-30 (owner): the regional results quoted in the Checkpoint B record and ADR 0008 stay as
-  they are; from Phase 5 on, findings stay out of tracked files until Checkpoint C.
-- 2026-10-30: P2 uses the headline AUI; P4 is the ten nearest countries in published
-  `usage_pct`, ties by country code; Korea is excluded from every peer set.
-- 2026-10-30: for April–May 2026 the headline AUI is the published value (ADR 0006 item 4b);
-  recomputing it from shares rounded to two decimals moves Korea from 14th to 13th in May.
-- 2026-10-30: use cases are shares of work, personal and coursework; collaboration buckets and
-  patterns are shares of the five patterns, which reproduces Anthropic's buckets (largest gap
-  1e-14 in August 2025, 0.011 in May 2026); SOC, request-topic and artifact mixes are shares of
-  published, classified rows. A metric with an unpublished input is missing, not zero.
-- 2026-10-30: task concentration is the share of all conversations in the 100 largest published
-  O*NET tasks, compared with P4.
-- 2026-10-30: F2 and F3 show the P1a and P1b economies one by one; F4 shows every SOC major
-  group and the five largest gaps each way among the major request topics (level 2).
+- Data: the small pinned inputs are committed under `data/raw/`, the AEI files fetched (ADR 0007
+  amendment); KOSIS keys are added at request time (`key_env: KOSIS_KEY`).
+- National (RQ1): P2 uses the headline AUI, P4 the ten countries nearest in published share
+  (ties by code), Korea excluded; the April–May 2026 headline AUI is the published value
+  (ADR 0006); use cases are shares of classified use cases, collaboration of the five patterns
+  (which reproduces Anthropic's buckets), mixes of published classified rows; task concentration
+  is the share of all conversations in the 100 largest published tasks, compared with P4.
+- Regional (RQ2): Wilson 95% intervals from counts (weekly releases); M4 over classified use cases,
+  February 2026 over all conversations (coursework unpublished for Ulsan and Jeju); GRDP per
+  capita 2024 (preliminary); facets only where all 17 regions publish them.
+- Composition (RQ3–RQ4; owner, D2–D5): M5(a) from the USA's May 2026 detailed-SOC shares over OEWS
+  employment, global shares as the sensitivity; missing values left out and coverage reported;
+  OEWS May 2025, suppressed state cells left out; equal splits from SOC 2018 to SOC 2010 to ISCO,
+  OEWS aggregates as single units, KSCO 8631 without a value, the first listed ISCO link as the
+  one-to-one sensitivity; ILO scores unadjusted; M5(a) kept as defined although small,
+  much-discussed occupations get extreme values (T3 reports the alternatives).
+- Findings (owner): the results quoted in the Checkpoint B record and ADR 0008 stay; from
+  Phase 5 on, findings stay out of tracked files until Checkpoint C.
+- Engineering (owner, 2026-10-30): plumbing tests, the duplicate Windows CI job, the brief
+  placeholder and unused code paths were removed under the Proportionality rules.
 
 ## Blockers
 

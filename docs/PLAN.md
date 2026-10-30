@@ -2,8 +2,8 @@
 
 - Project: korea-ai-exposure
 - Owner: Hyungbae Cho
-- Status: approved by the owner, 2026-10-29; amended by the Checkpoint A decisions of 2026-10-30
-  (ADRs 0003–0007). Both are recorded in `docs/PROJECT_STATUS.md`.
+- Status: approved by the owner, 2026-10-29, and kept as that record. Later decisions supersede
+  it where they differ: ADRs 0003–0009 and `docs/PROJECT_STATUS.md`; current rules: `CLAUDE.md`.
 
 ## 1. Objective
 

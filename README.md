@@ -4,7 +4,7 @@ Where AI is used, and where AI-exposed work sits, across Korea's 17 metropolitan
 provinces. Measured from public data: the Anthropic Economic Index, Anthropic's occupation-level
 exposure data, and Korean official statistics.
 
-**Status:** work in progress; no results yet.
+**Status:** work in progress; results are released after review.
 
 ## Questions
 
@@ -15,8 +15,8 @@ exposure data, and Korean official statistics.
 
 ## Reproducibility
 
-`make all` will regenerate every figure and number from pinned public sources. Raw data are
-downloaded by scripts and are not stored in this repository.
+`make all` regenerates every figure and number from pinned public sources. Small inputs are
+stored in `data/raw/`; the large Anthropic Economic Index files are downloaded by `make fetch`.
 
 - Sources, versions, and licenses: [`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md)
 - Plan: [`docs/PLAN.md`](docs/PLAN.md)
@@ -31,6 +31,7 @@ make check   # ruff lint, ruff format check, offline tests
 make fetch   # download the pinned public files into data/raw/ and verify their checksums
 make build   # canonical tables (fetches first)
 make replicate   # recompute published values from the pinned files and compare
+make figures && make facts   # figures, tables and the facts sheet in outputs/
 ```
 
 If `make setup` cannot find Python 3.12, pass the interpreter: `make setup PYTHON=/path/to/python3.12`.
