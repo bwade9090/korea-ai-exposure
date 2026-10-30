@@ -69,8 +69,8 @@ Schema notes:
 ## Korean official statistics
 
 Data come from KOSIS. The producer is 국가데이터처 (formerly Statistics Korea) unless noted. Access:
-KOSIS OpenAPI with a free key (`KOSIS_API_KEY` in `.env`; the owner's file currently names it
-`KOSIS_KEY`). Terms: the KOSIS use guide allows free use, reuse and redistribution with citation
+KOSIS OpenAPI with a free key (`KOSIS_KEY` in `.env`), which the fetcher adds at request time;
+pins record the URL without it (`key_env`). Terms: the KOSIS use guide allows free use, reuse and redistribution with citation
 (producer, survey, period, access date, table, URL); no table-level KOGL mark is shown. KOSIS
 revises tables in place, so pinned checksums can drift. Region codes differ by table; map regions
 by name. Gwangju and Jeonnam merged into 전남광주통합특별시 on 2026-07-01 (Act No. 21446); tables
@@ -78,15 +78,15 @@ handle it differently (notes below), and naive sums can double-count.
 
 | ID | Content | Table | Status |
 | --- | --- | --- | --- |
-| KR-POP | Resident registration population by region and age, monthly, month end (행정안전부); excludes foreign residents | `DT_1B04005N` (5-year groups, 읍면동); `DT_1B04006` (single years, 시군구) | Verified 2026-10-29: exact 15–64 sums for 17 regions, 2025.08–2026.05; latest 2026.09. From 2026.07 code 12 replaces 29 and 46. The statistical description notes the data are for viewing and reference, without processing or for-profit use (ADR 0007) |
+| KR-POP | Resident registration population by region and age, monthly, month end (행정안전부); excludes foreign residents | `DT_1B04005N` (5-year groups, 읍면동); `DT_1B04006` (single years, 시군구) | Verified 2026-10-29: exact 15–64 sums for 17 regions, 2025.08–2026.05; latest 2026.09. From 2026.07 code 12 replaces 29 and 46. The statistical description notes the data are for viewing and reference, without processing or for-profit use (ADR 0007). Pinned 2026-10-30: 15–64 classes, 2025.11–2026.05 |
 | KR-OCC | 지역별고용조사, employed persons by 시도 × occupation (KSCO-8: 9 major, 56 sub-major groups), half-yearly | `DT_1ES3B06J` (2013 1/2–2026 1/2, back-cast to KSCO-8; 17 regions from 2017 1/2); legacy KSCO-7 `DT_1ES3B06S` ends 2024 1/2 | Verified 2026-10-29; recommended tier T1 (ADR 0004). Reliability flags are a separate `*` item |
 | KR-OCC-NAT | 지역별고용조사, national employment by KSCO-8 minor group (소분류) | `DT_1ES3B32J` | Verified 2026-10-29; weights for aggregating to sub-major groups |
 | KR-OCC-EAPS | 경제활동인구조사, employed persons by 시도 × KSCO-8 major group, monthly | `DT_1DA7E34S_NEW` | Verified 2026-10-29; exact-month sensitivity. Code 12 is an extra aggregate next to Gwangju and Jeonnam |
 | KR-OCC-WORK | 지역별고용조사, workplace-based employment by 시군구 × 6 broad occupation groups | `DT_1ES3C07S` | Verified 2026-10-29: no Sejong, no 시도 level; not used |
-| KR-WORK | 지역별고용조사: workplace-based employment (시군구 only, 16 regions, no Sejong) and residence-based employment by 시도 | `DT_1ES3C01S` (workplace); `DT_1ES3B01J` (residence, 17 regions, benchmarked) | Partly available 2026-10-29: no 시도-level workplace table; 시군구 sums are not benchmarked |
-| KR-WORK-EST | 사업체노동력조사 (Ministry of Employment and Labor), workers by workplace 시도, monthly; employees of industries B–S (no agriculture, forestry or fishing) | `DT_118N_MOND66` (orgId 118) | Verified 2026-10-29: 17 regions, 2024.01–2026.08; 2025 onward provisional; coverage of civil servants not yet checked |
+| KR-WORK | 지역별고용조사: workplace-based employment (시군구 only, 16 regions, no Sejong) and residence-based employment by 시도 | `DT_1ES3C01S` (workplace); `DT_1ES3B01J` (residence, 17 regions, benchmarked); `DT_1ES3A01S` (residence by 시군구, for the commuting check of ADR 0005) | Partly available 2026-10-29: no 시도-level workplace table; 시군구 sums are not benchmarked. Pinned 2026-10-30: `DT_1ES3B01J`, `DT_1ES3C01S`, `DT_1ES3A01S`, 2025 2/2–2026 1/2 |
+| KR-WORK-EST | 사업체노동력조사 (Ministry of Employment and Labor), workers by workplace 시도, monthly; employees of industries B–S (no agriculture, forestry or fishing) | `DT_118N_MOND66` (orgId 118) | Verified 2026-10-29: 17 regions, 2024.01–2026.08; 2025 onward provisional; coverage of civil servants not yet checked. Pinned 2026-10-30: all industries, 2025.11–2026.05 |
 | KR-PROJ | 장래인구추계, population by 시도 on 1 July, including foreign residents | `DT_1BPB001` | Verified 2026-10-29: the population behind GRDP per capita; optional sensitivity |
-| KR-GRDP | 지역소득, GRDP per capita by 시도, thousand won at current prices | `DT_1C96` (2020 base) | Replaced 2026-10-29: candidate `DT_1C86` is the superseded 2015-base table; latest year 2024 (preliminary) |
+| KR-GRDP | 지역소득, GRDP per capita by 시도, thousand won at current prices | `DT_1C96` (2020 base) | Replaced 2026-10-29: candidate `DT_1C86` is the superseded 2015-base table; latest year 2024 (preliminary). Pinned 2026-10-30: 2024 |
 | KR-CENSUS2020-OCC | 2020 인구주택총조사 (20% sample): 시도 × KSCO-7 minor group; workplace-based 시도 × major group | `DT_1PD2002`; `DT_1PC2012` | Verified 2026-10-29; robustness only. The 2025 census sample tables are not yet released |
 | KR-MDIS | 지역별고용조사 microdata (MDIS) | Owner download; never committed | Assessed 2026-10-29: no finer 시도 × occupation detail than KR-OCC; adds a workplace-region variable; optional owner-run sensitivity (ADR 0004) |
 

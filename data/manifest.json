@@ -72,6 +72,60 @@
       "sha256": "f974b358bce0e5a8417510c61da4342234cd0de9d9d0b62acf4c6dbcf8ec7b68",
       "bytes": 219174671,
       "retrieved_at": "2026-10-30T00:05:09Z"
+    },
+    {
+      "path": "kosis/KR-GRDP/DT_1C96_per_capita_2024.json",
+      "source": "KR-GRDP",
+      "url": "https://kosis.kr/openapi/Param/statisticsParameterData.do?method=getList&orgId=101&tblId=DT_1C96&itmId=T1&objL1=ALL&prdSe=Y&startPrdDe=2024&endPrdDe=2024&format=json&jsonVD=Y",
+      "sha256": "6e3b43719a5932dcbb80a0b5eac50fbedc2de49ff4f633c0bc5a0b2b3df69436",
+      "bytes": 8027,
+      "retrieved_at": "2026-10-30T05:26:59Z",
+      "key_env": "KOSIS_KEY"
+    },
+    {
+      "path": "kosis/KR-POP/DT_1B04005N_age15-64_202511_202605.json",
+      "source": "KR-POP",
+      "url": "https://kosis.kr/openapi/Param/statisticsParameterData.do?method=getList&orgId=101&tblId=DT_1B04005N&itmId=T2&objL1=00+11+26+27+28+29+30+31+36+41+43+44+46+47+48+50+51+52&objL2=0+20+25+30+35+40+45+50+55+60+65&prdSe=M&startPrdDe=202511&endPrdDe=202605&format=json&jsonVD=Y",
+      "sha256": "f3f4782c78c8b7c2844727f5d6e92f677ba57bbd545aee324032d8d14f272ff1",
+      "bytes": 775639,
+      "retrieved_at": "2026-10-30T05:26:51Z",
+      "key_env": "KOSIS_KEY"
+    },
+    {
+      "path": "kosis/KR-WORK-EST/DT_118N_MOND66_workers_202511_202605.json",
+      "source": "KR-WORK-EST",
+      "url": "https://kosis.kr/openapi/Param/statisticsParameterData.do?method=getList&orgId=118&tblId=DT_118N_MOND66&itmId=emp001&objL1=ALL&objL2=260225INDUSTRY_11S0&prdSe=M&startPrdDe=202511&endPrdDe=202605&format=json&jsonVD=Y",
+      "sha256": "8b11d1788bdbd23745215c1d29525393f143e3f795f7bbdb05d8aa0d9b69406c",
+      "bytes": 70337,
+      "retrieved_at": "2026-10-30T05:26:52Z",
+      "key_env": "KOSIS_KEY"
+    },
+    {
+      "path": "kosis/KR-WORK/DT_1ES3A01S_employed_202502_202601.json",
+      "source": "KR-WORK",
+      "url": "https://kosis.kr/openapi/Param/statisticsParameterData.do?method=getList&orgId=101&tblId=DT_1ES3A01S&itmId=T3&objL1=ALL&prdSe=H&startPrdDe=202502&endPrdDe=202601&format=json&jsonVD=Y",
+      "sha256": "eefc3dda131a355f65707444cb3c33a95458640ce28bc0be4117e50deabbb498",
+      "bytes": 177543,
+      "retrieved_at": "2026-10-30T05:26:58Z",
+      "key_env": "KOSIS_KEY"
+    },
+    {
+      "path": "kosis/KR-WORK/DT_1ES3B01J_employed_202502_202601.json",
+      "source": "KR-WORK",
+      "url": "https://kosis.kr/openapi/Param/statisticsParameterData.do?method=getList&orgId=101&tblId=DT_1ES3B01J&itmId=T3&objL1=ALL&objL2=S0&prdSe=H&startPrdDe=202502&endPrdDe=202601&format=json&jsonVD=Y",
+      "sha256": "5e1b22c214d6e0ac4ecf68cc327b6d7887d0f455d6c3d5659a0ab547bbddfc41",
+      "bytes": 17590,
+      "retrieved_at": "2026-10-30T05:26:54Z",
+      "key_env": "KOSIS_KEY"
+    },
+    {
+      "path": "kosis/KR-WORK/DT_1ES3C01S_employed_202502_202601.json",
+      "source": "KR-WORK",
+      "url": "https://kosis.kr/openapi/Param/statisticsParameterData.do?method=getList&orgId=101&tblId=DT_1ES3C01S&itmId=T00&objL1=ALL&prdSe=H&startPrdDe=202502&endPrdDe=202601&format=json&jsonVD=Y",
+      "sha256": "22bf08d03b149bca2668a3e046af23e7ddd60372cd3fcdadffe2aa5b44e7a4d2",
+      "bytes": 211740,
+      "retrieved_at": "2026-10-30T05:26:56Z",
+      "key_env": "KOSIS_KEY"
     }
   ]
 }
