@@ -79,8 +79,8 @@ handle it differently (notes below), and naive sums can double-count.
 | ID | Content | Table | Status |
 | --- | --- | --- | --- |
 | KR-POP | Resident registration population by region and age, monthly, month end (행정안전부); excludes foreign residents | `DT_1B04005N` (5-year groups, 읍면동); `DT_1B04006` (single years, 시군구) | Verified 2026-10-29: exact 15–64 sums for 17 regions, 2025.08–2026.05; latest 2026.09. From 2026.07 code 12 replaces 29 and 46. The statistical description notes the data are for viewing and reference, without processing or for-profit use (ADR 0007). Pinned 2026-10-30: 15–64 classes, 2025.11–2026.05 |
-| KR-OCC | 지역별고용조사, employed persons by 시도 × occupation (KSCO-8: 9 major, 56 sub-major groups), half-yearly | `DT_1ES3B06J` (2013 1/2–2026 1/2, back-cast to KSCO-8; 17 regions from 2017 1/2); legacy KSCO-7 `DT_1ES3B06S` ends 2024 1/2 | Verified 2026-10-29; recommended tier T1 (ADR 0004). Reliability flags are a separate `*` item |
-| KR-OCC-NAT | 지역별고용조사, national employment by KSCO-8 minor group (소분류) | `DT_1ES3B32J` | Verified 2026-10-29; weights for aggregating to sub-major groups |
+| KR-OCC | 지역별고용조사, employed persons by 시도 × occupation (KSCO-8: 9 major, 56 sub-major groups), half-yearly | `DT_1ES3B06J` (2013 1/2–2026 1/2, back-cast to KSCO-8; 17 regions from 2017 1/2); legacy KSCO-7 `DT_1ES3B06S` ends 2024 1/2 | Verified 2026-10-29; recommended tier T1 (ADR 0004). Reliability flags are a separate `*` item. Pinned 2026-10-30 |
+| KR-OCC-NAT | 지역별고용조사, national employment by KSCO-8 minor group (소분류) | `DT_1ES3B32J` | Verified 2026-10-29; weights for aggregating to sub-major groups. Pinned 2026-10-30 |
 | KR-OCC-EAPS | 경제활동인구조사, employed persons by 시도 × KSCO-8 major group, monthly | `DT_1DA7E34S_NEW` | Verified 2026-10-29; exact-month sensitivity. Code 12 is an extra aggregate next to Gwangju and Jeonnam |
 | KR-OCC-WORK | 지역별고용조사, workplace-based employment by 시군구 × 6 broad occupation groups | `DT_1ES3C07S` | Verified 2026-10-29: no Sejong, no 시도 level; not used |
 | KR-WORK | 지역별고용조사: workplace-based employment (시군구 only, 16 regions, no Sejong) and residence-based employment by 시도 | `DT_1ES3C01S` (workplace); `DT_1ES3B01J` (residence, 17 regions, benchmarked); `DT_1ES3A01S` (residence by 시군구, for the commuting check of ADR 0005) | Partly available 2026-10-29: no 시도-level workplace table; 시군구 sums are not benchmarked. Pinned 2026-10-30: `DT_1ES3B01J`, `DT_1ES3C01S`, `DT_1ES3A01S`, 2025 2/2–2026 1/2 |
@@ -96,10 +96,10 @@ BLS publications are in the public domain; cite BLS as the source.
 
 | ID | Content | Source | Status |
 | --- | --- | --- | --- |
-| XW-SOC1018 | SOC 2010 ↔ SOC 2018 | BLS `https://www.bls.gov/soc/2018/soc_2010_to_2018_crosswalk.xlsx` (linked from `crosswalks_used_by_agencies.htm`) | Verified 2026-10-29: 900 links; needs `BLS_USER_AGENT` |
-| XW-ISCO-SOC | ISCO-08 ↔ SOC 2010 | BLS `https://www.bls.gov/soc/ISCO_SOC_Crosswalk.xls`; process note `ISCO_SOC_Crosswalk_process.pdf` | Verified 2026-10-29: 1,125 links; two links to 3-digit ISCO groups; 14 weak matches listed only in the note |
+| XW-SOC1018 | SOC 2010 ↔ SOC 2018 | BLS `https://www.bls.gov/soc/2018/soc_2010_to_2018_crosswalk.xlsx` (linked from `crosswalks_used_by_agencies.htm`) | Verified 2026-10-29: 900 links; needs `BLS_USER_AGENT`. Pinned 2026-10-30 |
+| XW-ISCO-SOC | ISCO-08 ↔ SOC 2010 | BLS `https://www.bls.gov/soc/ISCO_SOC_Crosswalk.xls`; process note `ISCO_SOC_Crosswalk_process.pdf` | Verified 2026-10-29: 1,125 links; two links to 3-digit ISCO groups; 14 weak matches listed only in the note. Pinned 2026-10-30 |
 | XW-ONET | O*NET-SOC 2019 → SOC 2018 | O*NET Resource Center `https://www.onetcenter.org/taxonomy/2019/soc/2019_to_SOC_Crosswalk.csv?fmt=csv` (CC BY 4.0) | Verified 2026-10-29: 1,016 → 867 codes; files generated per request |
-| XW-KSCO-ISCO | KSCO-8 ↔ ISCO-08 (4-digit unit groups) | 통계분류포털 `https://kssc.mods.go.kr:8443/ksscNew_web/` (KOGL Type 3) | Verified 2026-10-29 for KSCO-8 (November 2025 table); no KSCO-7 table published |
+| XW-KSCO-ISCO | KSCO-8 ↔ ISCO-08 (4-digit unit groups) | 통계분류포털 `https://kssc.mods.go.kr:8443/ksscNew_web/` (KOGL Type 3) | Verified 2026-10-29 for KSCO-8 (November 2025 table); no KSCO-7 table published. Pinned 2026-10-30 |
 | XW-KSCO87 | KSCO-8 ↔ KSCO-7 (5-digit) | 통계분류포털 (KOGL Type 3) | Verified 2026-10-29: editions with small differences and range rows; needed only if KSCO-7 data are used |
 | CL-KSCO8 | KSCO-8 code lists (10/57/167/495/1,270), Korean and English names | 통계분류포털 (linkage files, English tree, 해설서 PDF) | Verified 2026-10-29 |
 | CL-KSCO7 | KSCO-7 code lists (10/52/156/450/1,231) | 통계분류포털 | Verified 2026-10-29 |
@@ -108,16 +108,16 @@ BLS publications are in the public domain; cite BLS as the source.
 
 | ID | Content | Source | Status |
 | --- | --- | --- | --- |
-| US-OEWS-NAT | OEWS national employment by SOC, May 2025 | BLS `https://www.bls.gov/oes/special-requests/oesm25nat.zip` (public domain) | Verified 2026-10-29: 830 detailed occupations; scripted access with `BLS_USER_AGENT` |
-| US-OEWS-ST | OEWS state employment by SOC, May 2025 | BLS `https://www.bls.gov/oes/special-requests/oesm25st.zip` | Verified 2026-10-29: 50 states, DC and 3 territories; 0.79% of employment unpublished |
-| US-SOC2018 | 2018 SOC structure | BLS `https://www.bls.gov/soc/2018/soc_structure_2018.xlsx` | Verified 2026-10-29: needed to read broad parents (not derivable from codes) |
+| US-OEWS-NAT | OEWS national employment by SOC, May 2025 | BLS `https://www.bls.gov/oes/special-requests/oesm25nat.zip` (public domain) | Verified 2026-10-29: 830 detailed occupations; scripted access with `BLS_USER_AGENT`. Pinned 2026-10-30 |
+| US-OEWS-ST | OEWS state employment by SOC, May 2025 | BLS `https://www.bls.gov/oes/special-requests/oesm25st.zip` | Verified 2026-10-29: 50 states, DC and 3 territories; 0.79% of employment unpublished. Pinned 2026-10-30 |
+| US-SOC2018 | 2018 SOC structure | BLS `https://www.bls.gov/soc/2018/soc_structure_2018.xlsx` | Verified 2026-10-29: needed to read broad parents (not derivable from codes). Pinned 2026-10-30 |
 | US-OEWS-OCCDEF | OEWS occupation list with definitions (documents the 12 OEWS aggregate codes) | BLS `occupation_definitions_m2021.xlsx` | Verified 2026-10-29 |
 
 ## Optional
 
 | ID | Content | Source | Status |
 | --- | --- | --- | --- |
-| ILO-WP140 | ISCO-08 4-digit exposure means and SDs; task-level scores | Gmyrek et al. (2025), ILO Working Paper 140 (CC BY 4.0); companion repository `pgmyrek/2025_GenAI_scores_ISCO08`, commit `ce5fc25c2a0db2757c5bfa797c4cfc8b408431ea` (CC BY 4.0 since 2026-10-12) | Verified 2026-10-29: the companion Excel file reproduces Table A1; 427 of 436 unit groups scored |
+| ILO-WP140 | ISCO-08 4-digit exposure means and SDs; task-level scores | Gmyrek et al. (2025), ILO Working Paper 140 (CC BY 4.0); companion repository `pgmyrek/2025_GenAI_scores_ISCO08`, commit `ce5fc25c2a0db2757c5bfa797c4cfc8b408431ea` (CC BY 4.0 since 2026-10-12) | Verified 2026-10-29: the companion Excel file reproduces Table A1; 427 of 436 unit groups scored. Pinned 2026-10-30 |
 | WB-POP | Population ages 15–64 by country (`SP.POP.1564.TO`) | World Bank WDI (CC BY 4.0) | Verified 2026-10-29: through 2025, 217 economies; no Taiwan; sensitivity for AUI (ADR 0006) |
 | ABS-ERP | Population by state and age (dataflow `ERP_Q`) | Australian Bureau of Statistics Data API, Beta (CC BY 4.0) | Verified 2026-10-29: through 2026-Q1; Australia replication only |
 

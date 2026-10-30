@@ -74,12 +74,83 @@
       "retrieved_at": "2026-10-30T00:05:09Z"
     },
     {
+      "path": "bls/US-OEWS-NAT/oesm25nat.zip",
+      "source": "US-OEWS-NAT",
+      "url": "https://www.bls.gov/oes/special-requests/oesm25nat.zip",
+      "sha256": "b5855a37f3e03e779f6fbf173d3bbc94aeeff33426aef32fa95ce6d025bab1af",
+      "bytes": 279525,
+      "retrieved_at": "2026-10-30T06:02:40Z",
+      "user_agent_env": "BLS_USER_AGENT"
+    },
+    {
+      "path": "bls/US-OEWS-ST/oesm25st.zip",
+      "source": "US-OEWS-ST",
+      "url": "https://www.bls.gov/oes/special-requests/oesm25st.zip",
+      "sha256": "74d5be0e1df865517d22dc3bd1fc3a8af5f6f9e3052a2163143021505d8e04c6",
+      "bytes": 7563829,
+      "retrieved_at": "2026-10-30T06:02:42Z",
+      "user_agent_env": "BLS_USER_AGENT"
+    },
+    {
+      "path": "bls/US-SOC2018/soc_structure_2018.xlsx",
+      "source": "US-SOC2018",
+      "url": "https://www.bls.gov/soc/2018/soc_structure_2018.xlsx",
+      "sha256": "ade08af40923266f3a854842e888ca3e93c15b26a147c20a2b12a61f4c4f4077",
+      "bytes": 51367,
+      "retrieved_at": "2026-10-30T06:02:38Z",
+      "user_agent_env": "BLS_USER_AGENT"
+    },
+    {
+      "path": "bls/XW-ISCO-SOC/ISCO_SOC_Crosswalk.xls",
+      "source": "XW-ISCO-SOC",
+      "url": "https://www.bls.gov/soc/ISCO_SOC_Crosswalk.xls",
+      "sha256": "0936c78c4ab2cb0b61d7cfe3dcf0f94d943a4e30b11dade1f11676307e2c0aae",
+      "bytes": 311296,
+      "retrieved_at": "2026-10-30T06:02:37Z",
+      "user_agent_env": "BLS_USER_AGENT"
+    },
+    {
+      "path": "bls/XW-SOC1018/soc_2010_to_2018_crosswalk.xlsx",
+      "source": "XW-SOC1018",
+      "url": "https://www.bls.gov/soc/2018/soc_2010_to_2018_crosswalk.xlsx",
+      "sha256": "f3a847561562d3e5a30eb848f2902a5f7b02e9c48b3d7f2cc8879899fbc242a7",
+      "bytes": 46630,
+      "retrieved_at": "2026-10-30T06:02:36Z",
+      "user_agent_env": "BLS_USER_AGENT"
+    },
+    {
+      "path": "ilo/ILO-WP140/Final_Scores_ISCO08_Gmyrek_et_al_2025.xlsx",
+      "source": "ILO-WP140",
+      "url": "https://raw.githubusercontent.com/pgmyrek/2025_GenAI_scores_ISCO08/ce5fc25c2a0db2757c5bfa797c4cfc8b408431ea/Final_Scores_ISCO08_Gmyrek_et_al_2025.xlsx",
+      "sha256": "c1940b87e7293b1eb95b530b6d3da7cd806b61d217c4bff1e69372b2cff5c90a",
+      "bytes": 2598951,
+      "retrieved_at": "2026-10-30T06:02:43Z"
+    },
+    {
       "path": "kosis/KR-GRDP/DT_1C96_per_capita_2024.json",
       "source": "KR-GRDP",
       "url": "https://kosis.kr/openapi/Param/statisticsParameterData.do?method=getList&orgId=101&tblId=DT_1C96&itmId=T1&objL1=ALL&prdSe=Y&startPrdDe=2024&endPrdDe=2024&format=json&jsonVD=Y",
       "sha256": "6e3b43719a5932dcbb80a0b5eac50fbedc2de49ff4f633c0bc5a0b2b3df69436",
       "bytes": 8027,
       "retrieved_at": "2026-10-30T05:26:59Z",
+      "key_env": "KOSIS_KEY"
+    },
+    {
+      "path": "kosis/KR-OCC-NAT/DT_1ES3B32J_202502_202601.json",
+      "source": "KR-OCC-NAT",
+      "url": "https://kosis.kr/openapi/Param/statisticsParameterData.do?method=getList&orgId=101&tblId=DT_1ES3B32J&itmId=ALL&objL1=ALL&prdSe=H&startPrdDe=202502&endPrdDe=202601&format=json&jsonVD=Y",
+      "sha256": "3c03c4946acddd613bbe3015fc811df9725269c885c41f1dd4732bfd4ac1a262",
+      "bytes": 671542,
+      "retrieved_at": "2026-10-30T06:02:49Z",
+      "key_env": "KOSIS_KEY"
+    },
+    {
+      "path": "kosis/KR-OCC/DT_1ES3B06J_202502_202601.json",
+      "source": "KR-OCC",
+      "url": "https://kosis.kr/openapi/Param/statisticsParameterData.do?method=getList&orgId=101&tblId=DT_1ES3B06J&itmId=ALL&objL1=ALL&objL2=ALL&prdSe=H&startPrdDe=202502&endPrdDe=202601&format=json&jsonVD=Y",
+      "sha256": "0e2e71edf265df7c250508951eb220111cb633dc1b2560226568ae1a0dc7f1e7",
+      "bytes": 1540540,
+      "retrieved_at": "2026-10-30T06:02:47Z",
       "key_env": "KOSIS_KEY"
     },
     {
@@ -126,6 +197,14 @@
       "bytes": 211740,
       "retrieved_at": "2026-10-30T05:26:56Z",
       "key_env": "KOSIS_KEY"
+    },
+    {
+      "path": "kssc/XW-KSCO-ISCO/KSCO8_ISCO08_linkage_20260127.xlsx",
+      "source": "XW-KSCO-ISCO",
+      "url": "https://kssc.mods.go.kr:8443/ksscNew_web/upload/%ED%95%9C%EA%B5%AD%ED%91%9C%EC%A4%80%EC%A7%81%EC%97%85%EB%B6%84%EB%A5%98%28KSCO%208%EC%B0%A8%29-%EA%B5%AD%EC%A0%9C%ED%91%9C%EC%A4%80%EC%A7%81%EC%97%85%EB%B6%84%EB%A5%98%28ISCO-08%29%20%EC%97%B0%EA%B3%84%ED%91%9C_20260127034430.xlsx",
+      "sha256": "d401d12d503abf353ed1ef026c1d44fef8be38c88dfdbf168548b341e0a11633",
+      "bytes": 328025,
+      "retrieved_at": "2026-10-30T06:02:45Z"
     }
   ]
 }
