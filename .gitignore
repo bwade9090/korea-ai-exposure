@@ -31,3 +31,7 @@ Thumbs.db
 data/raw/
 data/manual/
 data/interim/
+
+# Results (figures, result tables, facts) stay untracked until Checkpoint C: the repository is
+# public, and findings are released only after the ADR 0002 review (Checkpoint A, decision A7).
+outputs/
