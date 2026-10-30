@@ -7,9 +7,8 @@ Each manifest entry records which registered source a file belongs to (``source`
 
 Fetching is idempotent: a file already present with its pinned checksum is not downloaded again.
 A download whose checksum differs from the pin is refused, leaving the local file and the pin
-unchanged, unless ``--update`` is given. ``--update`` acts only on files that are downloaded, that
-is, files that are missing or corrupt locally; add ``--refresh`` to re-download verified files as
-well and so detect upstream revisions. Downloads stream into a temporary file beside the
+unchanged, unless ``--update`` is given (it acts on files that are missing or corrupt locally).
+Downloads stream into a temporary file beside the
 destination and are moved into place only once accepted, so a failed or refused download never
 leaves a partial file. Empty responses, and HTML pages where data were expected (block pages,
 landing pages of moved files), are refused.
@@ -29,8 +28,6 @@ host, the key is removed from error messages, and an API error object is refused
 Usage::
 
     python -m korea_ai_exposure.fetch                     # fetch and verify every pinned file
-    python -m korea_ai_exposure.fetch --source AEI-LMI    # only the files of one source
-    python -m korea_ai_exposure.fetch --refresh           # also re-check verified files upstream
     python -m korea_ai_exposure.fetch --update            # accept and re-pin changed files
     python -m korea_ai_exposure.fetch --add SOURCE URL PATH [--user-agent-env BLS_USER_AGENT]
     python -m korea_ai_exposure.fetch --add SOURCE URL PATH --key-env KOSIS_KEY
@@ -324,7 +321,6 @@ def fetch(
     raw_dir: Path,
     *,
     update: bool = False,
-    refresh: bool = False,
     now: Callable[[], str] = utc_now,
     log: Log = print,
 ) -> tuple[list[Pin], list[str]]:
@@ -334,9 +330,7 @@ def fetch(
     errors: list[str] = []
     for pin in pins:
         try:
-            result.append(
-                _fetch_one(pin, raw_dir, update=update, refresh=refresh, now=now, log=log)
-            )
+            result.append(_fetch_one(pin, raw_dir, update=update, now=now, log=log))
         except (FetchError, OSError) as exc:
             errors.append(str(exc))
             result.append(pin)
@@ -383,22 +377,16 @@ def add(
     return list(by_path.values())
 
 
-def _fetch_one(
-    pin: Pin, raw_dir: Path, *, update: bool, refresh: bool, now: Callable[[], str], log: Log
-) -> Pin:
+def _fetch_one(pin: Pin, raw_dir: Path, *, update: bool, now: Callable[[], str], log: Log) -> Pin:
     dest = _destination(raw_dir, pin.path)
     verified = _matches(dest, pin)
-    if verified and not refresh:
+    if verified:
         log(f"verified  {pin.path}")
         return pin
     got = _download_pinned(pin.url, dest, _user_agent(pin.user_agent_env), pin.key_env)
     if (got.sha256, got.size) == (pin.sha256, pin.size):
-        if verified:
-            got.tmp.unlink()
-            log(f"unchanged {pin.path}")
-        else:
-            _place(got.tmp, dest)
-            log(f"fetched   {pin.path} ({got.size:,} bytes)")
+        _place(got.tmp, dest)
+        log(f"fetched   {pin.path} ({got.size:,} bytes)")
         return pin
     if update:
         _place(got.tmp, dest)
@@ -612,21 +600,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="with --add: environment variable holding the API key, e.g. KOSIS_KEY",
     )
     parser.add_argument(
-        "--source",
-        action="append",
-        metavar="ID",
-        help="fetch only the files of this source ID (repeatable)",
-    )
-    parser.add_argument(
-        "--refresh",
-        action="store_true",
-        help="re-download files that already verify, to detect upstream revisions",
-    )
-    parser.add_argument(
         "--update",
         action="store_true",
-        help="accept downloaded files whose checksum changed, and re-pin them; it acts only on "
-        "files that are downloaded (missing or corrupt ones, or all with --refresh)",
+        help="accept downloaded files whose checksum changed, and re-pin them (missing or "
+        "corrupt files only)",
     )
     parser.add_argument("--manifest", type=Path, default=paths.MANIFEST, help=argparse.SUPPRESS)
     parser.add_argument("--raw-dir", type=Path, default=paths.RAW, help=argparse.SUPPRESS)
@@ -637,8 +614,6 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if (args.user_agent_env or args.key_env) and not args.add:
         parser.error("--user-agent-env and --key-env require --add")
-    if args.add and (args.source or args.refresh):
-        parser.error("--source and --refresh cannot be combined with --add")
     load_dotenv(args.env_file)
 
     errors: list[str] = []
@@ -661,13 +636,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
             save_manifest(args.manifest, pins)
             return 0
-        selected = [pin for pin in pins if not args.source or pin.source in args.source]
-        if args.source and not selected:
-            raise FetchError(f"no files registered for {', '.join(args.source)}")
-        if not selected:
+        if not pins:
             print(f"No files registered in {args.manifest.name}; nothing to fetch.")
             return 0
-        fetched, errors = fetch(selected, args.raw_dir, update=args.update, refresh=args.refresh)
+        fetched, errors = fetch(pins, args.raw_dir, update=args.update)
         merged = {pin.path: pin for pin in pins} | {pin.path: pin for pin in fetched}
         if list(merged.values()) != pins:
             save_manifest(args.manifest, merged.values())

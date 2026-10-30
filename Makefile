@@ -14,7 +14,7 @@ VENV_PY := .venv/bin/python
 endif
 
 .NOTPARALLEL:
-.PHONY: setup lock check fetch build replicate figures facts brief all
+.PHONY: setup lock check fetch build replicate figures facts all
 
 # Create .venv and install the pinned, hash-checked environment.
 setup:
@@ -54,8 +54,4 @@ figures:
 facts:
 	$(VENV_PY) -m korea_ai_exposure.facts
 
-# Phase 6 (docs/PLAN.md section 8); until then it fails.
-brief:
-	@echo "make $@: not implemented yet (see docs/PLAN.md section 8)"; exit 1
-
-all: build figures facts brief
+all: build figures facts

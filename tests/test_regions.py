@@ -5,8 +5,6 @@ KOSIS DT_1B04005N (administrative codes) and DT_1C96 / DT_1DA7E34S_NEW (survey c
 swapped or mistyped code in the module fails here.
 """
 
-import datetime
-
 import pytest
 
 from korea_ai_exposure import regions
@@ -134,21 +132,6 @@ def test_kosis_rows_below_province_level_are_refused(system, code, label):
 def test_a_label_that_contradicts_the_code_is_refused():
     with pytest.raises(ValueError, match="label"):
         regions.from_kosis("survey", "26", "부산광역시")  # survey 26 is Ulsan
-
-
-def test_regions_before_and_after_the_gwangju_jeonnam_merger():
-    assert len(regions.regions_on("2026-05-31")) == 17
-    assert len(regions.regions_on(datetime.date(2026, 6, 30))) == 17
-    after = {region.name for region in regions.regions_on(regions.MERGER_DATE)}
-    assert len(after) == 15
-    assert {"Gwangju", "Jeonnam"}.isdisjoint(after)
-    assert len(regions.regions_on(datetime.datetime(2026, 7, 1, 12))) == 15
-
-
-@pytest.mark.parametrize("value", ["202605", "202601", "2026.05", "20260531", 202605])
-def test_kosis_periods_must_be_converted_before_use(value):
-    with pytest.raises(ValueError):
-        regions.regions_on(value)
 
 
 def test_committed_csv_is_current():

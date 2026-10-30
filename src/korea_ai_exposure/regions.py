@@ -29,21 +29,16 @@ city of 광주 in Gyeonggi.
 """
 
 import csv
-import datetime
 import io
-import re
 from dataclasses import dataclass
 from pathlib import Path
 
 from korea_ai_exposure import paths
 
 CODE_SYSTEMS = ("iso", "admin", "survey", "survey4", "moel")
-MERGER_DATE = "2026-07-01"
-MERGED_REGION = "전남광주통합특별시"
 MERGED_CODES = {"admin": "12", "survey": "12", "moel": "202000"}
 MOEL_PREFIX = "ZONE2017A"
 CSV_PATH = paths.PROCESSED / "regions.csv"
-_ISO_DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
 
 
 @dataclass(frozen=True)
@@ -163,26 +158,6 @@ def from_kosis(system: str, code: str, label: str | None = None) -> Region:
     if label is not None and from_name(label) is not region:
         raise ValueError(f"{system} code {code!r} is {region.name}, but its label is {label!r}")
     return region
-
-
-def regions_on(date: datetime.date | str) -> tuple[Region, ...]:
-    """Regions in existence on ``date``, a date or an ISO string such as ``2026-05-31``;
-    Gwangju and Jeonnam end on 2026-06-30. KOSIS periods such as ``202605`` are refused:
-    convert them to a date first."""
-    day = _as_date(date)
-    return tuple(
-        r for r in REGIONS if r.valid_to is None or day <= datetime.date.fromisoformat(r.valid_to)
-    )
-
-
-def _as_date(value: datetime.date | str) -> datetime.date:
-    if isinstance(value, datetime.datetime):
-        return value.date()
-    if isinstance(value, datetime.date):
-        return value
-    if isinstance(value, str) and _ISO_DATE.fullmatch(value):
-        return datetime.date.fromisoformat(value)
-    raise ValueError(f"expected a date or an ISO date string such as 2026-05-31, not {value!r}")
 
 
 def to_csv() -> str:

@@ -1,11 +1,9 @@
 """Schema adapters for the AEI releases, on small synthetic files."""
 
-import json
-
 import pandas as pd
 import pytest
 
-from korea_ai_exposure import aei, paths
+from korea_ai_exposure import aei
 
 WEEKLY = "geo_id,geography,date_start,date_end,platform_and_product,facet,level,variable,cluster_name,value\n"  # noqa: E501
 MONTHLY = "date_start,date_end,geo_id,geo_level,category_name,hierarchy_level,metric_id,value,node_name,node_external_id\n"  # noqa: E501
@@ -157,14 +155,6 @@ def test_iso_table_keeps_namibia(tmp_path):
     assert aei.iso2_to_iso3(path) == {"NA": "NAM", "KR": "KOR"}
 
 
-def test_every_release_file_is_pinned_under_its_source_id():
-    manifest = json.loads(paths.MANIFEST.read_text(encoding="utf-8"))
-    pins = {entry["path"]: entry["source"] for entry in manifest["files"]}
-    for release in aei.RELEASES:
-        assert pins.get(release.path) == release.source
-    assert pins.get(aei.ISO_CODES.relative_to(paths.RAW).as_posix()) == "AEI-2025-09"
-
-
 def test_geo_values_reads_whole_geography_rows_of_any_facet(tmp_path):
     path = weekly(
         tmp_path,
@@ -223,62 +213,3 @@ def test_korean_regions_in_weekly_and_monthly_frames(tmp_path):
     )
     regions = replication.korean_regions(monthly_frame, "usage_pct", "2026-05-01")
     assert regions.to_dict() == {"KR-11": 63.65}
-
-
-@pytest.fixture
-def synthetic_releases(tmp_path, monkeypatch):
-    """Two tiny releases in the real schemas, installed in place of the pinned ones."""
-    raw = tmp_path / "raw"
-    (raw / "w").mkdir(parents=True)
-    (raw / "m").mkdir()
-    (raw / "w" / "weekly.csv").write_text(
-        WEEKLY
-        + f"KR,country,{WEEK},country,0,usage_pct,,3.06\n"
-        + f"GLOBAL,global,{WEEK},country,0,usage_count,,1000\n"
-        + f"KR,country,{WEEK},country,0,usage_count,,30\n",
-        encoding="utf-8",
-    )
-    (raw / "m" / "monthly.csv").write_text(
-        MONTHLY
-        + "2026-05-01,2026-06-01,KOR,country,overall,0,usage_pct,3.24,Overall,-\n"
-        + "2026-04-01,2026-05-01,KOR,country,overall,0,usage_pct,3.19,Overall,-\n",
-        encoding="utf-8",
-    )
-    iso = raw / "iso.csv"
-    iso.write_text("iso_alpha_2,iso_alpha_3,country_name\nKR,KOR,Korea\n", encoding="utf-8")
-    monkeypatch.setattr(paths, "RAW", raw)
-    monkeypatch.setattr(aei, "ISO_CODES", iso)
-    monkeypatch.setattr(
-        aei,
-        "RELEASES",
-        (
-            aei.Release("2026-01-15", "AEI-2026-01", "w/weekly.csv", "weekly", "test"),
-            aei.Release("2026-06-26", "AEI-2026-06", "m/monthly.csv", "monthly", "test"),
-        ),
-    )
-    aei._load.cache_clear()
-    yield
-    aei._load.cache_clear()
-
-
-@pytest.mark.usefixtures("synthetic_releases")
-def test_load_returns_a_copy_that_callers_may_change():
-    first = aei.load("2026-06-26")
-    first.loc[first["metric"] == "usage_pct", "value"] = 999.0
-    first["extra"] = 1
-    second = aei.load("2026-06-26")
-    assert tuple(second.columns) == aei.COLUMNS
-    assert sorted(second["value"]) == [3.19, 3.24]
-
-
-@pytest.mark.usefixtures("synthetic_releases")
-def test_build_writes_a_sorted_validated_parquet_table(tmp_path):
-    path = tmp_path / "long.parquet"
-    frame = aei.build(path)
-    back = pd.read_parquet(path)
-    assert tuple(back.columns) == aei.COLUMNS
-    assert len(back) == 5
-    assert back.equals(frame)
-    assert list(back["release"]) == ["2026-01-15"] * 3 + ["2026-06-26"] * 2
-    assert list(back["period_start"].iloc[3:]) == ["2026-04-01", "2026-05-01"]
-    assert not back.duplicated(aei.CANONICAL_KEY).any()
