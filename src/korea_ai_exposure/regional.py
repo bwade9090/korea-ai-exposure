@@ -52,18 +52,23 @@ DENOMINATORS_CSV = paths.PROCESSED / "denominators.csv"
 _NATIONAL = {"admin": "00", "survey": "00", "survey4": "0000", "moel": "000000"}
 
 
-def kosis_table(path: Path, system: str) -> pd.DataFrame:
-    """A pinned KOSIS table (JSON rows) with a numeric ``value`` and the ``region`` (ISO code) of
-    each row, its code read in ``system``; national totals and the merged-region aggregate are
+def kosis_table(path: Path, system: str, item: str | None = None) -> pd.DataFrame:
+    """A pinned KOSIS table (JSON rows), optionally only item ``item``, with a numeric ``value``
+    (a cell KOSIS marks as not published, "-", is missing) and the ``region`` (ISO code) of each
+    row, its code read in ``system``; national totals and the merged-region aggregate are
     dropped, and any other code that is not one of the 17 regions is an error."""
     rows = pd.DataFrame(json.loads(path.read_text(encoding="utf-8")))
+    if item is not None:
+        rows = rows[rows["ITM_ID"] == item]
     totals = {_NATIONAL[system], regions.MERGED_CODES.get(system)}
     rows = rows[~rows["C1"].str.removeprefix(regions.MOEL_PREFIX).isin(totals)].copy()
     rows["region"] = [
         regions.from_kosis(system, code, label).iso
         for code, label in zip(rows["C1"], rows["C1_NM"], strict=True)
     ]
-    rows["value"] = rows["DT"].astype(float)
+    if not rows["DT"].str.fullmatch(r"-?[\d.]+|-").all():
+        raise ValueError(f"{path.name}: unexpected cell values")
+    rows["value"] = pd.to_numeric(rows["DT"], errors="coerce")
     return rows
 
 
