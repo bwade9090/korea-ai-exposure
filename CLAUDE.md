@@ -34,11 +34,9 @@ the working protocol below, this section wins.
 
 ## Current checkpoint
 
-- Phase: **5 — composition versus adoption (RQ3–RQ4)**, not started. Phases 0–4 are complete;
-  Checkpoints A and B were approved on 2026-10-30 (ADRs 0003–0008 accepted); ADR 0009 (exposure
-  measure for RQ4) is proposed.
-- Next unit: once the owner's decisions D1–D5 are recorded in `docs/PROJECT_STATUS.md`, Phase
-  5.1, crosswalks (`docs/PLAN.md` §8, ADR 0004).
+- Phase: **5 — composition versus adoption (RQ3–RQ4)**, in progress. Phases 0–4 are complete;
+  Checkpoints A and B were approved on 2026-10-30; ADRs 0003–0009 are accepted (D1–D5 decided).
+- Next unit: the next open Phase 5 item in `docs/PROJECT_STATUS.md` (`docs/PLAN.md` §8).
 - Until Checkpoint C, `outputs/` stays untracked: the repository is public and findings are not
   released before the ADR 0002 review.
 - Authority files, in order:

@@ -1,6 +1,7 @@
 # ADR 0009 — Primary exposure measure for RQ4
 
-- Status: proposed, 2026-10-30, before Phase 5.
+- Status: accepted, 2026-10-30 (the owner approved the proposal as written, with D2–D5 in
+  `docs/PROJECT_STATUS.md`). Proposed 2026-10-30.
 - Decider: Hyungbae Cho
 - Evidence: `docs/discovery/01_source_verification.md` (AEI-LMI, ILO-WP140, crosswalks);
   `docs/discovery/02_prior_art.md` (Bank of Korea note)
@@ -32,7 +33,7 @@ Two occupation-level measures are pinned or verified:
 2. **Observed exposure as primary (PLAN M5b).** Closest to observed AI use, but not independent
    of the usage side of RQ4, and it needs the longer, US-weighted crosswalk.
 
-## Proposed decision
+## Decision
 
 Option 1. M6 uses the ILO WP140 unit-group means (unadjusted), mapped to KSCO-8 sub-major groups
 with the PLAN §7 weights; observed exposure is computed the same way and reported beside it.

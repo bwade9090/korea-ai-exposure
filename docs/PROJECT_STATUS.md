@@ -17,8 +17,8 @@ Last updated: 2026-10-30
   `data/processed/denominators.csv`; `make figures` adds F5–F7 and `make facts` adds T2 and the
   RQ2 facts (620 facts in all).
 - Checkpoint B approved 2026-10-30 (below); ADR 0008 accepted.
-- **Phase 5 — composition versus adoption (RQ3–RQ4): next, after the owner's decisions D1–D5
-  (open decisions below).**
+- **Phase 5 — composition versus adoption (RQ3–RQ4): in progress.** The owner approved D1–D5 as
+  recommended on 2026-10-30 (ADR 0009 accepted; D2–D5 under Choices).
 - Checkpoint A approved 2026-10-30 (below).
 - The repository is public by the owner's decision of 2026-10-29 (ADR 0002 amendment), so every
   push publishes. `outputs/` stays untracked until Checkpoint C.
@@ -26,33 +26,13 @@ Last updated: 2026-10-30
 
 ## Next action
 
-The owner decides D1–D5 below; then Phase 5 (`docs/PLAN.md` §8): crosswalks (5.1), occupation
-intensities (5.2) and the decomposition (RQ3–RQ4).
+Phase 5 (`docs/PLAN.md` §8): pin the crosswalk, OEWS, ILO and KOSIS occupation inputs; then
+crosswalks (5.1), occupation intensities (5.2), the US benchmark (5.3), Korea's `X_r`, `ŵ_r` and
+`R_r` (5.4), the rank comparison with the Bank of Korea (5.5), robustness (5.6), and F8–F9 and
+T3 (5.7).
 
 ## Open decisions
 
-Before Phase 5, with recommendations:
-
-- **D1, primary exposure measure for RQ4:** ADR 0009 (proposed): ILO WP140 (Gmyrek et al.
-  2025), with Anthropic's observed exposure as the secondary measure.
-- **D2, input for M5(a):** the USA's shares of detailed SOC occupations in release 2026-06-26,
-  May 2026 (O*NET-SOC 2019 codes truncated to SOC 2018), over OEWS national employment shares;
-  global shares as the sensitivity (PLAN §6). The weekly releases have no SOC facet and get no
-  in-house task-to-SOC map (ADR 0006 item 7).
-- **D3, occupations without a value:** left out, with the weights renormalized over occupations
-  that have one, and coverage reported at each step (share of US employment with a value; share
-  of Korean employment with an assigned value). Never zero; the 411 zeros of observed exposure
-  are published values and stay.
-- **D4, OEWS:** May 2025 (national and state; released 2026-05-15). Suppressed state cells (0.79%
-  of employment in the 50 states and DC; 0.12–5.84% by state) are left out, with each state's
-  coverage reported.
-- **D5, remaining crosswalk weights (PLAN §7):** a SOC 2018 code that splits into several SOC
-  2010 codes divides its employment equally among them; each of the 12 OEWS aggregate codes is
-  one unit, whose usage share is the sum of its components', whose exposure is their
-  equal-weight mean, and whose ISCO links are theirs; KSCO-8 unit 8631, which has no ISCO-08
-  link, gets no value (its minor group averages the other units); the KSSC one-to-one rules are
-  a sensitivity, reported with the Spearman rho of the regional rankings (PLAN §7: below 0.9 is
-  not robust).
 - Checkpoint C: publication, after the ADR 0002 review of findings.
 
 ## Owner actions
@@ -85,6 +65,17 @@ One line each; ADRs only for choices that change results (`CLAUDE.md`, Proportio
   published; 2025 is due in December 2026.
 - 2026-10-30: regional facets (4.5) keep the metrics published for all 17 regions; task
   concentration is left out (sparse regional task breakdowns).
+- 2026-10-30 (owner, D2): M5(a) uses the USA's detailed-SOC shares in release 2026-06-26, May
+  2026 (O*NET-SOC 2019 truncated to SOC 2018), over OEWS national employment shares; global
+  shares are the sensitivity.
+- 2026-10-30 (owner, D3): occupations without a value are left out, weights renormalized over the
+  rest, and coverage reported at each step; never zero (observed exposure's 411 zeros are values).
+- 2026-10-30 (owner, D4): OEWS May 2025, national and state; suppressed state cells are left out,
+  with each state's coverage reported.
+- 2026-10-30 (owner, D5): a SOC 2018 code split across SOC 2010 codes divides its employment
+  equally; each OEWS aggregate is one unit (usage share summed, exposure averaged equally, ISCO
+  links pooled over its components); KSCO-8 unit 8631 gets no value; the KSSC one-to-one rules
+  are a sensitivity (PLAN §7: rank rho below 0.9 is not robust).
 - 2026-10-30: P2 uses the headline AUI; P4 is the ten nearest countries in published
   `usage_pct`, ties by country code; Korea is excluded from every peer set.
 - 2026-10-30: for April–May 2026 the headline AUI is the published value (ADR 0006 item 4b);
