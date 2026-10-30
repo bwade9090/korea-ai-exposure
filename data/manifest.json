@@ -1,4 +1,77 @@
 {
   "schema_version": 1,
-  "files": []
+  "files": [
+    {
+      "path": "aei/labor_market_impacts/job_exposure.csv",
+      "source": "AEI-LMI",
+      "url": "https://huggingface.co/datasets/Anthropic/EconomicIndex/resolve/4e5f69fab13a9c3f7d0dcc31a6f893a9818738f6/labor_market_impacts/job_exposure.csv",
+      "sha256": "4f0a3adf5feeb2ec5f5d02ab18cc5e851a2a4b8470bde84c0c9335017be12d68",
+      "bytes": 37176,
+      "retrieved_at": "2026-10-30T00:05:10Z"
+    },
+    {
+      "path": "aei/labor_market_impacts/task_penetration.csv",
+      "source": "AEI-LMI",
+      "url": "https://huggingface.co/datasets/Anthropic/EconomicIndex/resolve/4e5f69fab13a9c3f7d0dcc31a6f893a9818738f6/labor_market_impacts/task_penetration.csv",
+      "sha256": "85bee872db1d55d3e9a7f4e89da5ae4a5d59aa8ec875d728fbf4b7d820984616",
+      "bytes": 1889822,
+      "retrieved_at": "2026-10-30T00:05:12Z"
+    },
+    {
+      "path": "aei/release_2025_09_15/aei_enriched_claude_ai_2025-08-04_to_2025-08-11.csv",
+      "source": "AEI-2025-09",
+      "url": "https://huggingface.co/datasets/Anthropic/EconomicIndex/resolve/4e5f69fab13a9c3f7d0dcc31a6f893a9818738f6/release_2025_09_15/data/output/aei_enriched_claude_ai_2025-08-04_to_2025-08-11.csv",
+      "sha256": "48a2c39f8a98ce7c2ba72767cbe3760fd55ba4a64a193abfecefc76d19852c09",
+      "bytes": 26840881,
+      "retrieved_at": "2026-10-30T00:04:37Z"
+    },
+    {
+      "path": "aei/release_2025_09_15/iso_country_codes.csv",
+      "source": "AEI-2025-09",
+      "url": "https://huggingface.co/datasets/Anthropic/EconomicIndex/resolve/4e5f69fab13a9c3f7d0dcc31a6f893a9818738f6/release_2025_09_15/data/intermediate/iso_country_codes.csv",
+      "sha256": "eee318d4ab2c2c30f5a7da11f2bc7e0e36c246f6be5bb9b323fdb12b8e4809e0",
+      "bytes": 4564,
+      "retrieved_at": "2026-10-30T00:04:39Z"
+    },
+    {
+      "path": "aei/release_2025_09_15/working_age_pop_2024_country.csv",
+      "source": "AEI-WAP2024",
+      "url": "https://huggingface.co/datasets/Anthropic/EconomicIndex/resolve/4e5f69fab13a9c3f7d0dcc31a6f893a9818738f6/release_2025_09_15/data/intermediate/working_age_pop_2024_country.csv",
+      "sha256": "3a9e0edc0453702e8efb63d7cab57e5b1a689bc09e070626bbf513e37edd5dd3",
+      "bytes": 6321,
+      "retrieved_at": "2026-10-30T00:04:41Z"
+    },
+    {
+      "path": "aei/release_2025_09_15/working_age_pop_2024_us_state.csv",
+      "source": "AEI-WAP2024",
+      "url": "https://huggingface.co/datasets/Anthropic/EconomicIndex/resolve/4e5f69fab13a9c3f7d0dcc31a6f893a9818738f6/release_2025_09_15/data/intermediate/working_age_pop_2024_us_state.csv",
+      "sha256": "e2d0fb7239934f4f6d0ae3444ab12ad8ff1dd323b71ccfc4295d074b537f17ec",
+      "bytes": 1079,
+      "retrieved_at": "2026-10-30T00:04:43Z"
+    },
+    {
+      "path": "aei/release_2026_01_15/aei_raw_claude_ai_2025-11-13_to_2025-11-20.csv",
+      "source": "AEI-2026-01",
+      "url": "https://huggingface.co/datasets/Anthropic/EconomicIndex/resolve/4e5f69fab13a9c3f7d0dcc31a6f893a9818738f6/release_2026_01_15/data/intermediate/aei_raw_claude_ai_2025-11-13_to_2025-11-20.csv",
+      "sha256": "70dc16780061b84d3f34ddf7fe5c978d65c99a5ef58afd78f9315f886a6a5873",
+      "bytes": 94086309,
+      "retrieved_at": "2026-10-30T00:04:53Z"
+    },
+    {
+      "path": "aei/release_2026_03_24/aei_raw_claude_ai_2026-02-05_to_2026-02-12.csv",
+      "source": "AEI-2026-03",
+      "url": "https://huggingface.co/datasets/Anthropic/EconomicIndex/resolve/4e5f69fab13a9c3f7d0dcc31a6f893a9818738f6/release_2026_03_24/data/aei_raw_claude_ai_2026-02-05_to_2026-02-12.csv",
+      "sha256": "69ebf6f9afc1e3be45caab172a84ae09e78bf41b97e1c310100d81c8a35a7433",
+      "bytes": 103287181,
+      "retrieved_at": "2026-10-30T00:04:59Z"
+    },
+    {
+      "path": "aei/release_2026_06_26/aei_claude_ai_2026-06-26.csv",
+      "source": "AEI-2026-06",
+      "url": "https://huggingface.co/datasets/Anthropic/EconomicIndex/resolve/4e5f69fab13a9c3f7d0dcc31a6f893a9818738f6/release_2026_06_26/data/aei_claude_ai_2026-06-26.csv",
+      "sha256": "f974b358bce0e5a8417510c61da4342234cd0de9d9d0b62acf4c6dbcf8ec7b68",
+      "bytes": 219174671,
+      "retrieved_at": "2026-10-30T00:05:09Z"
+    }
+  ]
 }

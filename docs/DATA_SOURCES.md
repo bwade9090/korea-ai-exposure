@@ -24,7 +24,7 @@ affiliated with Anthropic.
 
 | ID | Path | Period | Geography | Status |
 | --- | --- | --- | --- | --- |
-| AEI-2025-09 | `release_2025_09_15/data/output/aei_enriched_claude_ai_2025-08-04_to_2025-08-11.csv` (26.8 MB); raw file in `data/intermediate/` | 4–11 Aug 2025 | Global, country, US state | Verified 2026-10-29: Korea AUI 3.725, rank 5 of 115; no Korean subregions |
+| AEI-2025-09 | `release_2025_09_15/data/output/aei_enriched_claude_ai_2025-08-04_to_2025-08-11.csv` (26.8 MB; a superset of the raw file, `not_classified` included); `data/intermediate/iso_country_codes.csv` (ISO-2 to ISO-3) | 4–11 Aug 2025 | Global, country, US state | Verified 2026-10-29: Korea AUI 3.725, rank 5 of 115; no Korean subregions. Pinned 2026-10-30 |
 | AEI-WAP2024 | `release_2025_09_15/data/intermediate/working_age_pop_2024_country.csv`; `working_age_pop_2024_us_state.csv` | 2024 | Country (incl. Taiwan); US state | Verified 2026-10-29: the population input that reproduces the published AUI ranks and the April–May 2026 values (ADR 0006) |
 | AEI-ONET20 | `release_2025_09_15/data/intermediate/onet_task_statements.csv`; `soc_structure.csv` | O*NET 20.1 | — | Verified 2026-10-29: matches every task name in the raw releases; needed only for an in-house task-to-SOC map |
 | AEI-2026-01 | `release_2026_01_15/data/intermediate/aei_raw_claude_ai_2025-11-13_to_2025-11-20.csv` (94.1 MB) | 13–20 Nov 2025 | Global, country (ISO-2), country-state (ISO 3166-2) | Verified 2026-10-29: PLAN §3 values reproduce; no AUI in the release |
