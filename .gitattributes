@@ -8,3 +8,5 @@
 *.xls binary
 *.xlsx binary
 *.zip binary
+# Pinned inputs are stored byte for byte: their SHA-256 pins must survive checkout.
+data/raw/** -text

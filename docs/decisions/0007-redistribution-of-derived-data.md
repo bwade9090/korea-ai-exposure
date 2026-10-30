@@ -38,3 +38,13 @@ sources' terms differ:
 - A clean clone needs a free KOSIS key to rebuild the KOSIS-based tables; the committed
   processed tables let readers check results without one.
 - The owner may wish to confirm items 3 and 5 with the producers.
+
+## Amendment — 2026-10-30: committed inputs
+
+The owner decided that the pinned inputs other than the AEI files (KOSIS, BLS, ILO and KSSC; 15
+files, 14.7 MB) are committed unchanged under `data/raw/`, with attribution in `data/README.md`,
+so that the repository rebuilds without a KOSIS key and survives revised or moved sources. The
+AEI files stay out, because two of them exceed GitHub's 100 MB limit; they are fetched from their
+pinned Hugging Face commit. Item 1 is amended accordingly. Under item 4, the KSSC table is now
+redistributed unchanged, which KOGL Type 3 allows with attribution; no derivative of it is
+committed beyond the project's measures.

@@ -6,10 +6,9 @@ Register every source here before code depends on it. Status values:
 - **to verify** — not yet checked;
 - **assessed**, **blocked**, **replaced**, or **out of scope**, with a note.
 
-Raw files are never committed. Downloads are pinned in `data/manifest.json`. Owner-supplied files
-go to `data/manual/`. Evidence for every status below: `docs/discovery/01_source_verification.md`
-(Phase 1, 2026-10-29); checksums: `docs/discovery/01a_checksums.md`. What derived data may be
-committed: ADR 0007.
+Downloads are pinned in `data/manifest.json`; the small ones are committed under `data/raw/`, the
+AEI files are fetched (ADR 0007 amendment). Owner-supplied files go to `data/manual/`. Evidence
+for every status below: `docs/discovery/01_source_verification.md` (Phase 1, 2026-10-29).
 
 ## Anthropic Economic Index
 

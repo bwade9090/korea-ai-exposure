@@ -27,8 +27,13 @@ dist/
 .DS_Store
 Thumbs.db
 
-# Data: raw downloads, owner-supplied files, intermediates (never committed)
-data/raw/
+# Data. The small pinned inputs under data/raw/ are committed (ADR 0007 amendment); the large
+# AEI files are fetched (make fetch), and Phase 1 leftovers and other downloads stay local.
+data/raw/*
+!data/raw/bls/
+!data/raw/ilo/
+!data/raw/kosis/
+!data/raw/kssc/
 data/manual/
 data/interim/
 
