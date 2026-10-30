@@ -33,8 +33,7 @@ snapshot.
   Bank of Korea internal data, MDIS microdata). Do not read or write sibling repositories.
 - Ask the owner before publishing anything or changing repository visibility, passing
   Checkpoint C, any paid API call, or downloads that need the owner's login (they go to
-  `data/manual/`). The owner drafts the brief's narrative sections (findings, interpretation,
-  implications); Claude writes code, figures, tables, the facts sheet and the methodology.
+  `data/manual/`).
 - Until Checkpoint C (ADR 0002), findings stay out of tracked files: results live in `outputs/`,
   which is gitignored.
 

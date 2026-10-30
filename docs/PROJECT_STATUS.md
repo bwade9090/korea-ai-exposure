@@ -8,15 +8,15 @@ Last updated: 2026-10-30
   and `make facts` run from 24 pinned inputs; the results (F1–F9, T1–T3, `outputs/facts.json`)
   stay in `outputs/`, untracked until Checkpoint C. Replication of published values:
   `docs/replication.md`. Methodology draft: `report/methodology.md`.
-- **Phase 6 — brief (owner-led): in progress.**
+- **Phase 6 — brief: in progress.**
 - The repository is public (ADR 0002 amendment), so every push publishes.
 
 ## Next action
 
-The owner drafts the brief's narrative from `outputs/facts.json`, the figures (captions in
-`outputs/figures/captions.md`) and T1–T3; Claude edits prose on request and fits the methodology
-to the brief. Then one independent check of every number in the brief against its source, and
-Checkpoint C (ADR 0002, items 1–5).
+Draft the brief, every section, from `outputs/facts.json`, the figures (captions in
+`outputs/figures/captions.md`), T1–T3 and `report/methodology.md`. The draft holds findings, so
+it stays in `outputs/` until Checkpoint C; the owner reviews and edits it. Then one independent
+check of every number in the brief against its source, and Checkpoint C (ADR 0002, items 1–5).
 
 ## Open decisions
 
@@ -56,6 +56,8 @@ One line each; choices that change results are ADRs 0001–0009.
   Phase 5 on, findings stay out of tracked files until Checkpoint C.
 - Engineering (owner, 2026-10-30): plumbing tests, the duplicate Windows CI job, the brief
   placeholder and unused code paths were removed under the Proportionality rules.
+- Brief (owner, 2026-10-30): the rule that the owner drafts the narrative sections first is
+  dropped; Claude may draft any section, and the owner reviews it.
 
 ## Blockers
 
