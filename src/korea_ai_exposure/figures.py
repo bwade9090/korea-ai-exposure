@@ -4,11 +4,12 @@ as PNG and SVG in ``outputs/figures`` and writes the captions (period and source
 ``outputs/figures/captions.md``. Phase 3 adds F1-F4 (RQ1), Phase 4 F5-F7 (RQ2)."""
 
 import matplotlib
+import numpy as np
 import pandas as pd
 from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
 
-from korea_ai_exposure import aui, national, paths, regional, regions
+from korea_ai_exposure import aui, decomposition, national, paths, regional, regions
 
 FIGURES = paths.OUTPUTS / "figures"
 COLORS = {  # Okabe and Ito (2008), colour-blind safe
@@ -283,6 +284,103 @@ def f7_grdp(table: pd.DataFrame, grdp: pd.Series, association: dict) -> tuple[Fi
     return fig, caption
 
 
+def f8_us(states: pd.DataFrame, fit: dict) -> tuple[Figure, str]:
+    """F8: US states, observed against predicted work usage."""
+    fig = Figure(figsize=(5.6, 4.8), layout="constrained")
+    ax = fig.subplots()
+    _observed_against_predicted(ax, states, fit, COLORS["blue"])
+    labels = (np.log(states["residual"]).abs()).nlargest(6).index
+    for code in labels:
+        row = states.loc[code]
+        ax.annotate(
+            code,
+            (row.predicted_work, row.observed_work),
+            xytext=(4, 2),
+            textcoords="offset points",
+            fontsize=6.5,
+        )
+    ax.set_xlabel("Predicted share of US work usage (%, occupational composition)")
+    ax.set_ylabel("Observed share of US work usage (%, May 2026)")
+    caption = (
+        "US states and DC: observed share of US work-related Claude.ai conversations (May 2026: "
+        "each state's usage share times its work share, normalized) against the share predicted "
+        "by occupational composition (OEWS May 2025 state employment by occupation times national "
+        "usage per worker, M5a); log scales, dashed line: equality. R^2 is the share of variance "
+        "in log observed usage accounted for by log predicted usage. M5a assumes that workers "
+        "generate conversations about their own occupation's tasks; AEI classifies conversation "
+        f"content, not users' occupations. N = {fit['n']}. Sources: {national.HEADLINE.source}; "
+        "US-OEWS-NAT, US-OEWS-ST."
+    )
+    return fig, caption
+
+
+def f9_korea(table: pd.DataFrame, fit: dict) -> tuple[Figure, str]:
+    """F9: Korea, observed against predicted work usage, residuals, and exposure rank."""
+    fig = Figure(figsize=(10.8, 4.0), layout="constrained")
+    scatter_ax, residual_ax, rank_ax = fig.subplots(1, 3, width_ratios=[1.1, 1, 1])
+    _observed_against_predicted(scatter_ax, table, fit, KOREA_COLOR)
+    for code, row in table.iterrows():
+        scatter_ax.annotate(
+            regions.by_iso(code).name,
+            (row.predicted_work, row.observed_work),
+            xytext=(3, 2),
+            textcoords="offset points",
+            fontsize=6,
+        )
+    scatter_ax.set_xlabel("Predicted share of Korean work usage (%)")
+    scatter_ax.set_ylabel("Observed share (%, May 2026)")
+    residual = table["residual"].sort_values()
+    y = list(range(len(residual)))
+    colors = [KOREA_COLOR if r > 1 else COLORS["blue"] for r in residual]
+    residual_ax.barh(y, np.log(residual), color=colors, height=0.6)
+    residual_ax.set_yticks(y, [regions.by_iso(code).name for code in residual.index])
+    ticks = [0.2, 0.5, 1, 2]
+    residual_ax.set_xticks(np.log(ticks), [f"{t:g}" for t in ticks])
+    residual_ax.axvline(0, color="black", linewidth=0.6)
+    residual_ax.set_title("Observed over predicted (log scale)")
+    exposure_rank = table["ilo"].rank(ascending=False)
+    usage_rank = table["index_population"].rank(ascending=False)
+    rank_ax.scatter(exposure_rank, usage_rank, s=22, color=KOREA_COLOR, zorder=3)
+    for code in table.index:
+        rank_ax.annotate(
+            regions.by_iso(code).name,
+            (exposure_rank[code], usage_rank[code]),
+            xytext=(3, 2),
+            textcoords="offset points",
+            fontsize=6,
+        )
+    rank_ax.plot([1, 17], [1, 17], linestyle="--", color=COLORS["grey"], linewidth=0.8)
+    rank_ax.set_xlabel("Exposure rank (ILO WP140; 1 = highest)")
+    rank_ax.set_ylabel("Usage index rank (1 = highest)")
+    rank_ax.set_xticks([1, 5, 9, 13, 17])
+    rank_ax.set_yticks([1, 5, 9, 13, 17])
+    rank_ax.invert_xaxis()
+    rank_ax.invert_yaxis()
+    caption = (
+        "Korea's 17 regions, May 2026. Left: observed share of Korean work-related Claude.ai "
+        "conversations (M4) against the share predicted by occupational composition "
+        "(지역별고용조사 employment by KSCO-8 sub-major group, first half of 2026, times US usage "
+        "per worker "
+        "mapped SOC 2018 to SOC 2010 to ISCO-08 to KSCO-8, M5a); log scales, dashed line: "
+        "equality. Centre: residual, observed over predicted, log scale. Right: rank of "
+        "occupation-weighted exposure (ILO WP140, M6) against rank of the usage index (residents "
+        f"aged 15-64). N = {fit['n']}; associations, not effects; IP-based location can shift "
+        f"usage toward Seoul. Sources: {national.HEADLINE.source}; KR-OCC, KR-OCC-NAT, KR-POP; "
+        "US-OEWS-NAT; XW-SOC1018, XW-ISCO-SOC, XW-KSCO-ISCO; ILO-WP140."
+    )
+    return fig, caption
+
+
+def _observed_against_predicted(ax, table: pd.DataFrame, fit: dict, color: str) -> None:
+    ax.scatter(table["predicted_work"], table["observed_work"], s=18, color=color, zorder=3)
+    low = min(table["predicted_work"].min(), table["observed_work"].min()) * 0.7
+    high = max(table["predicted_work"].max(), table["observed_work"].max()) * 1.4
+    ax.plot([low, high], [low, high], linestyle="--", color=COLORS["grey"], linewidth=0.8)
+    ax.set_xscale("log")
+    ax.set_yscale("log")
+    ax.set_title(f"R^2 = {fit['r2']:.2f}, Spearman's rho = {fit['rho']:.2f}, N = {fit['n']}")
+
+
 _ANNOTATION = {"textcoords": "offset points", "ha": "center", "va": "bottom", "fontsize": 6.5}
 _LABEL_OFFSETS = {"KR-49": (4, -9)}  # F7: Jeju's label would cover Gwangju's
 
@@ -322,6 +420,7 @@ def main() -> int:
     profile = national.profile(headline)
     peers = national.peer_sets(headline, population)
     tables = regional.regional_tables(frames)
+    korea, us = decomposition.korea(frames), decomposition.us_states(frames)
     drawings = {
         "F1": lambda: f1_series(national.series(frames, population)),
         "F2": lambda: f2_mix(profile, peers),
@@ -333,6 +432,10 @@ def main() -> int:
             tables[regional.HEADLINE.label],
             regional.grdp_per_capita(),
             regional.grdp_association(tables[regional.HEADLINE.label]),
+        ),
+        "F8": lambda: f8_us(us, decomposition.fit(us["observed_work"], us["predicted_work"])),
+        "F9": lambda: f9_korea(
+            korea, decomposition.fit(korea["observed_work"], korea["predicted_work"])
         ),
     }
     FIGURES.mkdir(parents=True, exist_ok=True)

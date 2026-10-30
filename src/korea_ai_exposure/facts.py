@@ -1,6 +1,7 @@
 """``outputs/facts.json``: the numbers the brief quotes, each with unit, period, sources and the
 producing function (PLAN §9), and the result tables in ``outputs/tables``. Phase 3 adds the
-national profile (RQ1) and table T1, Phase 4 the regional distribution (RQ2) and table T2."""
+national profile (RQ1) and table T1, Phase 4 the regional distribution (RQ2) and table T2,
+Phase 5 composition against adoption (RQ3-RQ4) and table T3."""
 
 import json
 import numbers
@@ -8,7 +9,7 @@ import re
 
 import pandas as pd
 
-from korea_ai_exposure import aui, national, paths, regional, regions
+from korea_ai_exposure import aui, crosswalk, decomposition, national, paths, regional, regions
 
 FACTS = paths.OUTPUTS / "facts.json"
 TABLES = paths.OUTPUTS / "tables"
@@ -38,6 +39,9 @@ DENOMINATOR_UNITS = {
 }
 _PRODUCER = "korea_ai_exposure.national."
 _REGIONAL = "korea_ai_exposure.regional."
+_DECOMPOSITION = "korea_ai_exposure.decomposition."
+_CROSSWALK_PRODUCER = "korea_ai_exposure.crosswalk."
+_CHAIN = ["XW-SOC1018", "XW-ISCO-SOC", "XW-KSCO-ISCO"]  # SOC 2018 -> 2010 -> ISCO -> KSCO
 
 
 def national_facts(frames: dict[str, pd.DataFrame], population: pd.Series) -> list[dict]:
@@ -352,6 +356,139 @@ def write(facts: list[dict], frames: dict[str, pd.DataFrame], population: pd.Ser
     pd.concat(facets, names=["snapshot", "region"]).to_csv(
         TABLES / "T2_facets.csv", float_format="%.4f", lineterminator="\n"
     )
+    csv = {"float_format": "%.4f", "lineterminator": "\n"}
+    robustness = decomposition.robustness(frames)
+    robustness.to_csv(TABLES / "T3.csv", index=False, **csv)
+    (TABLES / "T3.md").write_text(t3_markdown(robustness), encoding="utf-8", newline="\n")
+    korea = decomposition.korea(frames)
+    korea.to_csv(TABLES / "rq3_korea.csv", **csv)
+    decomposition.us_states(frames).to_csv(TABLES / "rq3_us_states.csv", **csv)
+    decomposition.bok_comparison(korea).to_csv(TABLES / "rq4_bok.csv", index=False, **csv)
+    crosswalk.coverage(frames).to_csv(TABLES / "rq3_coverage.csv", **csv)
+    audit = crosswalk.audit(frames)
+    rows = [(kind, code) for kind, codes in audit.items() for code in codes]
+    pd.DataFrame(rows, columns=["kind", "code"]).to_csv(
+        TABLES / "rq3_audit.csv", index=False, lineterminator="\n"
+    )
+
+
+def composition_facts(frames: dict[str, pd.DataFrame]) -> list[dict]:
+    """RQ3 and RQ4 facts: each region's predicted work usage, residual and exposure (F9), the
+    Korean and US fits (F8, F9), crosswalk coverage, the Bank of Korea rank comparison, and the
+    robustness checks of T3."""
+    facts = []
+    headline, slug = national.HEADLINE, national.HEADLINE.period_start[:7]
+    korea = decomposition.korea(frames)
+    usage_sources = [headline.source, "KR-OCC", "KR-OCC-NAT", "US-OEWS-NAT", *_CHAIN]
+    exposure_sources = {
+        "ilo": ["KR-OCC", "KR-OCC-NAT", "XW-KSCO-ISCO", "ILO-WP140"],
+        "observed": ["KR-OCC", "KR-OCC-NAT", "AEI-LMI", "US-OEWS-NAT", *_CHAIN],
+    }
+    add = _adder(facts, headline.label, f"{_DECOMPOSITION}korea")
+    for code, row in korea.iterrows():
+        name = _slug(regions.by_iso(code).name)
+        add(
+            f"rq3.predicted_work.{name}.{slug}",
+            row.predicted_work,
+            f"{row.predicted_work:.2f}%",
+            "percent of predicted Korean work usage",
+            usage_sources,
+        )
+        add(
+            f"rq3.residual.{name}.{slug}",
+            row.residual,
+            f"{row.residual:.2f}",
+            "observed over predicted work usage",
+            usage_sources,
+        )
+    add = _adder(facts, "first half of 2026", f"{_DECOMPOSITION}korea")
+    for code, row in korea.iterrows():
+        name = _slug(regions.by_iso(code).name)
+        for measure, sources in exposure_sources.items():
+            add(
+                f"rq4.exposure_{measure}.{name}.2026-h1",
+                row[measure],
+                f"{row[measure]:.3f}",
+                f"employment-weighted {measure} exposure score (0-1)",
+                sources,
+            )
+
+    us = decomposition.us_states(frames)
+    add = _adder(facts, headline.label, f"{_DECOMPOSITION}fit")
+    for area, table, sources in (
+        ("korea", korea, usage_sources),
+        ("us", us, [headline.source, "US-OEWS-NAT", "US-OEWS-ST"]),
+    ):
+        result = decomposition.fit(table["observed_work"], table["predicted_work"])
+        n = result["n"]
+        add(
+            f"rq3.r2.{area}.{slug}",
+            result["r2"],
+            f"{result['r2']:.2f} (N = {n})",
+            "share of variance in log observed work usage accounted for by log predicted",
+            sources,
+        )
+        add(
+            f"rq3.rho.{area}.{slug}",
+            result["rho"],
+            f"{result['rho']:.2f} (N = {n})",
+            "Spearman's rho, observed and predicted work usage",
+            sources,
+        )
+    for kind, value in (("min", us["coverage"].min()), ("max", us["coverage"].max())):
+        add(
+            f"rq3.us_coverage.{kind}.{slug}",
+            value * 100,
+            f"{value * 100:.1f}%",
+            "percent of state employment in published cells with an intensity",
+            ["US-OEWS-ST"],
+        )
+
+    add = _adder(facts, headline.label, f"{_CROSSWALK_PRODUCER}coverage")
+    for measure, row in crosswalk.coverage(frames).iterrows():
+        for column, value in row.items():
+            if pd.notna(value):
+                add(
+                    f"rq3.coverage.{measure}.{column}",
+                    value * 100,
+                    f"{value * 100:.1f}%",
+                    "percent of employment",
+                    ["US-OEWS-NAT", "KR-OCC-NAT", *_CHAIN],
+                )
+
+    add = _adder(facts, headline.label, f"{_DECOMPOSITION}bok_comparison")
+    for row in decomposition.bok_comparison(korea).itertuples():
+        add(
+            f"rq4.bok.{row.bok}.{row.project}",
+            row.rho,
+            f"{row.rho:.2f} (N = {row.n})",
+            "Spearman's rho with the Bank of Korea's published rank order",
+            ["BOK-2026-09", headline.source, "KR-OCC", "ILO-WP140"],
+        )
+
+    add = _adder(facts, headline.label, f"{_DECOMPOSITION}robustness")
+    for row in decomposition.robustness(frames).itertuples():
+        add(
+            f"rq3.robustness.{_slug(row.ranking)}.{_slug(row.variant)}",
+            row.rho,
+            f"{row.rho:.2f}",
+            "Spearman's rho with the headline regional ranking",
+            usage_sources,
+        )
+    return facts
+
+
+def t3_markdown(table: pd.DataFrame) -> str:
+    """T3: Spearman's rho of each headline regional ranking with its variants (N = 17)."""
+    lines = [
+        "| Ranking | Variant | Spearman's rho | Robust (rho >= 0.9) |",
+        "| --- | --- | --- | --- |",
+    ]
+    for row in table.itertuples():
+        lines.append(
+            f"| {row.ranking} | {row.variant} | {row.rho:.3f} | {'yes' if row.robust else 'no'} |"
+        )
+    return "\n".join(lines) + "\n"
 
 
 def _adder(facts: list[dict], period: str, producer: str):
@@ -416,10 +553,10 @@ def _display(value: float, unit: str) -> str:
 def main() -> int:
     frames = national.snapshots()
     population = aui.working_age_population()
-    facts = national_facts(frames, population) + regional_facts(frames)
+    facts = national_facts(frames, population) + regional_facts(frames) + composition_facts(frames)
     write(facts, frames, population)
     print(
-        f"wrote {FACTS.relative_to(paths.ROOT).as_posix()}: {len(facts)} facts; T1 and T2 in "
+        f"wrote {FACTS.relative_to(paths.ROOT).as_posix()}: {len(facts)} facts; T1-T3 in "
         f"{TABLES.relative_to(paths.ROOT).as_posix()}"
     )
     return 0
