@@ -29,6 +29,8 @@ Requires Python 3.12, GNU Make, and a POSIX shell (Git Bash on Windows).
 make setup   # create .venv with the pinned, hash-checked environment
 make check   # ruff lint, ruff format check, offline tests
 make fetch   # download the pinned public files into data/raw/ and verify their checksums
+make build   # canonical tables (fetches first)
+make replicate   # recompute published values from the pinned files and compare
 ```
 
 If `make setup` cannot find Python 3.12, pass the interpreter: `make setup PYTHON=/path/to/python3.12`.

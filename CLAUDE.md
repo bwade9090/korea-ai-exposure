@@ -16,9 +16,9 @@ observed usage compares with occupational exposure; it does not repeat the expos
 
 ## Current checkpoint
 
-- Phase: **2 — AEI ingestion and replication**, in progress. Phases 0 and 1 are complete;
-  Checkpoint A was approved on 2026-10-30 (ADRs 0003–0007 accepted).
-- Next unit: the next open Phase 2 item in `docs/PROJECT_STATUS.md`. Checkpoint B follows Phase 4.
+- Phase: **3 — national profile (RQ1)**, not started. Phases 0–2 are complete; Checkpoint A was
+  approved on 2026-10-30 (ADRs 0003–0007 accepted).
+- Next unit: Phase 3.1, peer sets (`docs/PLAN.md` §8, ADR 0003). Checkpoint B follows Phase 4.
 - Until Checkpoint C, `outputs/` stays untracked: the repository is public and findings are not
   released before the ADR 0002 review.
 - Authority files, in order:
@@ -124,7 +124,8 @@ Phase 0 created these; keep the list current.
 | `make lock` | Re-pin `requirements.txt` from `requirements.in` (pip-tools, with hashes) |
 | `make check` | `ruff check`, `ruff format --check`, offline `pytest` |
 | `make fetch` | Download and checksum the files pinned in `data/manifest.json` |
-| `make build` | Canonical tables in `data/interim/` and `data/processed/` (placeholder until Phase 2) |
+| `make build` | Canonical tables: `data/interim/aei_long.parquet` (all AEI releases, PLAN 2.2) and `data/processed/regions.csv` |
+| `make replicate` | Replication checks of PLAN §3 and 2.4 against the pinned files, as a Markdown table; exit 1 on any failure |
 | `make figures`, `make facts`, `make brief` | Figures, facts sheet, rendered brief (placeholders until Phases 3–6) |
 | `make all` | fetch → build → figures → facts → brief |
 

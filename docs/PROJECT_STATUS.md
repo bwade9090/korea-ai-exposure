@@ -10,7 +10,10 @@ Last updated: 2026-10-30
   `docs/DATA_SOURCES.md`.
 - Checkpoint A: **approved 2026-10-30** (below). ADRs 0003–0007 accepted; PLAN §5, §6 (M1, M3),
   §7, 2.1, 2.4 and 3.1 updated to match.
-- **Phase 2 — AEI ingestion and replication: in progress.**
+- Phase 2 — AEI ingestion and replication: complete (2026-10-30). The canonical table builds from
+  a clean clone; 38 replication targets reproduce, none fails, and the optional Australian state
+  target is not run (it needs ABS population). Log and evidence below.
+- **Phase 3 — national profile (RQ1): next.**
 - Plan: `docs/PLAN.md` approved by the owner on 2026-10-29.
 - Repository: GitHub `origin` (`bwade9090/korea-ai-exposure`) is public by the owner's decision of
   2026-10-29 (ADR 0002 amendment). Every push publishes; the hard stops apply to every commit.
@@ -18,9 +21,10 @@ Last updated: 2026-10-30
 
 ## Next action
 
-Phase 2 (`docs/PLAN.md` §8): pin the AEI files (2.1), build the canonical long table (2.2) and the
-Korean region table (2.3), and run the replication tests (2.4). Results, failures included, go in
-the replication log below.
+Phase 3 (`docs/PLAN.md` §8): build the peer sets of ADR 0003 (3.1); compute M9 for Korea against
+each peer set in each release, and the series of share, AUI and rank across the five snapshots,
+with method changes flagged (3.2); then figures F1–F4 and table T1 (3.3). Figures, tables and
+`facts.json` go to `outputs/`, which stays untracked until Checkpoint C.
 
 ## Checkpoint A — decisions (owner, 2026-10-30)
 
@@ -89,13 +93,112 @@ None.
 
 ## Replication log
 
-Empty until Phase 2. Phase 1 already reproduced every value in PLAN §3 from the raw files, and
-the published AUIs of August 2025, November 2025 and April–May 2026 under their own bases
-(`docs/discovery/01_source_verification.md` §1.1).
+### Phase 2 — 2026-10-30
+
+`make replicate` (`korea_ai_exposure.replication`) at commit `f8d9d0c`, on the files pinned in
+`data/manifest.json` (Hugging Face commit `4e5f69fa…`); the data-marked test
+`test_every_replication_check_passes_or_is_a_declared_optional_target` runs the same checks.
+Tolerances follow PLAN 2.4. Basis: `published` compares the release's own AUI values;
+`anthropic_2025` and `renormalized` are the bases of ADR 0006; `published usage_pct` is the
+release's share of global usage.
+
+| Target | Published | Reproduced | Basis | Result | Note |
+| --- | --- | --- | --- | --- | --- |
+| Korean conversations, Nov 2025 | 30,618 | 30,618 |  | pass |  |
+| Korean regional counts sum to the national count, Nov 2025 | exact | 30,618 of 30,618 (17 regions) |  | pass |  |
+| Smallest regional count, Nov 2025 | 175 (Ulsan) | 175 (Ulsan) |  | pass |  |
+| Korean conversations, Feb 2026 | 29,075 | 29,075 |  | pass |  |
+| Korean regional counts sum to the national count, Feb 2026 | exact | 29,075 of 29,075 (17 regions) |  | pass |  |
+| Smallest regional count, Feb 2026 | 174 (Jeju) | 174 (Jeju) |  | pass |  |
+| Korean regions with published usage, Nov 2025 | 17 | 17 |  | pass |  |
+| Korea's share of global conversations, Nov 2025 | 3.06% | 3.0622% |  | pass |  |
+| Seoul's share of Korean usage, Nov 2025 | 58.23% | 58.2305% |  | pass |  |
+| Seoul + Gyeonggi + Incheon, Nov 2025 | 79.09% | 79.0940% |  | pass |  |
+| Incheon's share of Korean usage, Nov 2025 | 4.82% | 4.8207% |  | pass |  |
+| Korean regions with published usage, Feb 2026 | 17 | 17 |  | pass |  |
+| Korea's share of global conversations, Feb 2026 | 2.91% | 2.9075% |  | pass |  |
+| Seoul's share of Korean usage, Feb 2026 | 56.09% | 56.0929% |  | pass |  |
+| Seoul + Gyeonggi + Incheon, Feb 2026 | 81.91% | 81.9089% |  | pass |  |
+| Incheon's share of Korean usage, Feb 2026 | 10.56% | 10.5589% |  | pass |  |
+| Korean regions with published usage, Apr 2026 | 17 | 17 |  | pass |  |
+| Korea's share of global conversations, Apr 2026 | 3.19% | 3.1900% |  | pass |  |
+| Seoul's share of Korean usage, Apr 2026 | 63.53% | 63.5300% |  | pass |  |
+| Seoul + Gyeonggi + Incheon, Apr 2026 | 83.34% | 83.3400% |  | pass |  |
+| Incheon's share of Korean usage, Apr 2026 | 6.94% | 6.9400% |  | pass |  |
+| Korean regions with published usage, May 2026 | 17 | 17 |  | pass |  |
+| Korea's share of global conversations, May 2026 | 3.24% | 3.2400% |  | pass |  |
+| Seoul's share of Korean usage, May 2026 | 63.65% | 63.6500% |  | pass |  |
+| Seoul + Gyeonggi + Incheon, May 2026 | 82.78% | 82.7800% |  | pass |  |
+| Incheon's share of Korean usage, May 2026 | 6.75% | 6.7500% |  | pass |  |
+| Korea's published AUI and rank, Apr 2026 | 3.92, rank 9–10 of 114 | 3.92, rank 9–10 of 114 | published | pass |  |
+| Renormalized basis reproduces Korea's published AUI, Apr 2026 | 3.92 | 3.921 | renormalized | pass |  |
+| Korea's published AUI and rank, May 2026 | 3.78, rank 14 of 121 | 3.78, rank 14 of 121 | published | pass |  |
+| Renormalized basis reproduces Korea's published AUI, May 2026 | 3.78 | 3.774 | renormalized | pass |  |
+| Korea's AUI and rank, Aug 2025 (September 2025 report) | 3.73, rank 5 | 3.725, rank 5 of 115 | published | pass |  |
+| Rule anthropic_2025 reproduces every published AUI, Aug 2025 | 115 values | largest absolute difference 0.0e+00 over 115 countries | anthropic_2025 | pass |  |
+| Korea's AUI and rank, Nov 2025 (January 2026 appendix, Fig. 3) | 3.12, rank 7 of 116 | 3.123, rank 7 of 116 | anthropic_2025 | pass |  |
+| India's share of global usage and rank, Nov 2025 (India brief) | 5.8%, rank 2 | 5.81%, rank 2 of 116 | published usage_pct | pass |  |
+| Korea's AUI, Feb 2026 (Anthropic, 2026-05-26: 'more than 3.5 times') | above 3.5 | 3.692, rank 12 of 116 | renormalized | pass |  |
+| Australia's share of global usage and rank, Feb 2026 (Australia brief) | 1.6%, rank 11 | 1.59%, rank 11 of 116 | published usage_pct | pass |  |
+| Australia's AUI rank, Feb 2026 (Australia brief: 4.1, rank 7) | rank 7 | rank 7 of 116 | renormalized | pass | Published to one decimal; the basis is not pinned. Level 4.183 renormalized (truncates to 4.1, rounds to 4.2); 4.094 with usage over all geolocated conversations (rounds to 4.1). |
+| Australia's state indices, Feb 2026 (optional; NSW 1.20, VIC 1.19, WA 0.68) | NSW 1.20, VIC 1.19, WA 0.68 | not run |  | not run | Optional target: needs ABS state population (ABS-ERP), not pinned yet. |
+| Anthropic observed_exposure: occupations, zeros, maximum | 756; 411; 0.745 | 756; 411; 0.7451 |  | pass |  |
+
+38 pass, 0 fail, 1 not run.
+
+- Australia's AUI level: the brief gives 4.1, to one decimal, without its basis. The renormalized
+  value, 4.183, gives 4.1 only if truncated; usage over all geolocated conversations gives 4.094,
+  which rounds to 4.1. Neither basis is confirmed, so the check is on rank (PLAN 2.4). The rank
+  is the same on both bases, which differ by a constant factor.
+- Australia's state indices are an optional target: they need ABS population by state and age
+  (ABS-ERP), which is not pinned yet.
+- Phase 1 had reproduced these values with scratch scripts
+  (`docs/discovery/01_source_verification.md` §1.1); committed code now checks them.
 
 ## Validation evidence
 
 At the end of each phase, record the commands run and their results.
+
+### Phase 2 — 2026-10-30
+
+- `make check`: ruff clean; 216 passed, the data-marked tests included (run on the pinned files).
+- `make build`: `data/interim/aei_long.parquet` with 2,709,773 rows (2025-09-15: 136,705;
+  2026-01-15: 458,778; 2026-03-24: 477,717; 2026-06-26: 1,636,573) and
+  `data/processed/regions.csv` (17 regions, unchanged).
+- `make replicate`: 38 pass, 0 fail, 1 not run (log above).
+- Clean clone of commit `f8d9d0c`: `make setup` (CPython 3.12.16) installed the hash-checked
+  environment; `make build` downloaded and verified the nine pinned files (445.3 MB) and built
+  the table, in 55 s in all; `make replicate` printed the same table; `make check`: ruff clean,
+  216 passed. The Parquet file is byte-identical to the working tree's (SHA-256
+  `9711b8e2d1c5…`), and `make build` left the committed `regions.csv` unchanged.
+- Each fix commit was tested in its own state before it was committed: 196 passed at `f74e63d`,
+  205 at `0ac0cdc`, 216 at `f8d9d0c`.
+- No `.env` value, raw or URL-encoded, in any file of the Phase 2 commits.
+- CI: run 40984151111 on commit `f8d9d0c` succeeded on ubuntu-latest and windows-latest
+  (offline: 205 passed, the 11 data-marked tests skipped).
+
+#### Independent review of Phase 2
+
+Three reviewers (the adapters; the AUI and the replication checks; the region table and the
+tests), each followed by an adversarial verifier, reported 14 findings. The verifiers confirmed
+12, two of them the same issue, and refuted 2. In April 2026 the asserted rank range 9–10 of 114
+already pins Korea's tie at 3.92 to one other country, so no Norway-specific assertion was added.
+The employment-ministry codes are right once KOSIS's `ZONE2017A` prefix is removed; the prefix
+is now documented. Fixed in `f74e63d`, `0ac0cdc` and `f8d9d0c`:
+
+- Adapter: the August 2025 enriched file fills 28 countries that the release did not publish
+  with zero usage; those 140 rows are dropped, so a missing row stays "not published".
+  `geo_values` selects every whole-geography metric, task traits included, and raises on an
+  empty selection. `load` returns a copy of the cached release. `build` validates the table and
+  its key.
+- AUI and replication: share ranks use the AUI country set, which excludes Reunion and countries
+  below the floor. Each check is pass, fail or not run, and `make replicate` exits 1 only on a
+  failure, so the optional state target no longer counts as a pass. The August 2025 rule check
+  also compares the country sets. The Australia note gives both bases.
+- Region table and tests: every code of every region is tested against an independent literal.
+  `from_kosis` joins KOSIS rows by code and checks their labels. `regions_on` refuses KOSIS
+  periods such as `202605`. `MERGED_CODES` names the merged region's aggregate codes. Offline
+  tests now cover the Korean regional path, the check statuses and the exit code of `main()`.
 
 ### Phase 1 — 2026-10-29
 
