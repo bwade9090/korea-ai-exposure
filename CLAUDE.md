@@ -14,6 +14,24 @@ report Claude.ai usage for all 17 Korean regions (ISO 3166-2 `KR-xx`). Exposure-
 rankings already exist (Bank of Korea issue note, 15 September 2026). This project asks how
 observed usage compares with occupational exposure; it does not repeat the exposure-only analysis.
 
+## Proportionality
+
+This is a one-off study, not a system to operate. After Checkpoint C the repository is a frozen,
+reproducible snapshot; no refresh or maintenance is planned. Where this section conflicts with
+the working protocol below, this section wins.
+
+- Infrastructure is frozen: do not extend fetch, CI, the Makefile, or the lockfile unless
+  something is broken.
+- Choose the simplest implementation that produces a correct, reproducible number.
+- Test only what would change a reported number: AEI adapters, region mapping, crosswalk
+  weights, measure formulas. No tests for plotting or file plumbing.
+- ADRs only for choices that change results (the headline denominator at Checkpoint B, the
+  exposure measure for RQ4). Record other choices in one line in docs/PROJECT_STATUS.md.
+- No multi-agent review rounds on code. One independent check at the end: every number in the
+  brief against its source.
+- Keep docs/PROJECT_STATUS.md to current state, next action, and open decisions.
+- Phase 6.1: keep outputs/facts.json; drop the brief renderer and its CI check.
+
 ## Current checkpoint
 
 - Phase: **3 — national profile (RQ1)**, not started. Phases 0–2 are complete; Checkpoint A was
