@@ -39,9 +39,6 @@ the brief against its source, and Checkpoint C.
 
 ## Open decisions
 
-- Findings in tracked files: the Checkpoint B record below and ADR 0008 quote regional results,
-  which ADR 0002 holds back until Checkpoint C. Options: replace the numbers with pointers to the
-  untracked tables (the public history keeps them), or leave them.
 - Checkpoint C: publication, after the ADR 0002 review of findings.
 
 ## Owner actions
@@ -96,6 +93,8 @@ One line each; ADRs only for choices that change results (`CLAUDE.md`, Proportio
   users' occupations); T3 reports the observed-exposure and ILO intensities as variants.
 - 2026-10-30: US state work usage is each state's usage share times its work share, May 2026,
   for the 50 states and DC; the ILO scores are used unadjusted (no complementarity adjustment).
+- 2026-10-30 (owner): the regional results quoted in the Checkpoint B record and ADR 0008 stay as
+  they are; from Phase 5 on, findings stay out of tracked files until Checkpoint C.
 - 2026-10-30: P2 uses the headline AUI; P4 is the ten nearest countries in published
   `usage_pct`, ties by country code; Korea is excluded from every peer set.
 - 2026-10-30: for April–May 2026 the headline AUI is the published value (ADR 0006 item 4b);
