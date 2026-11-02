@@ -1,6 +1,6 @@
 # Project status
 
-Last updated: 2026-10-30
+Last updated: 2026-11-02
 
 ## Current state
 
@@ -8,6 +8,10 @@ Last updated: 2026-10-30
   and `make facts` run from 24 pinned inputs; the results (F1–F9, T1–T3, `outputs/facts.json`)
   stay in `outputs/`, untracked until Checkpoint C. Replication of published values:
   `docs/replication.md`. Methodology draft: `report/methodology.md`.
+- External review (2026-11-02), applied before the brief: RQ3–RQ4 compare regions per worker, not
+  on shares, which scale with size (ADR 0010: the RQ3 fit, the T3 usage rows, the Bank of Korea
+  comparison, F8–F9); the regional pattern is set beside the 2025 인터넷이용실태조사
+  (`regional.survey_check`, MSIT-NIA-2026).
 - **Phase 6 — brief: in progress.**
 - The repository is public (ADR 0002 amendment), so every push publishes.
 
@@ -17,6 +21,8 @@ Draft the brief, every section, from `outputs/facts.json`, the figures (captions
 `outputs/figures/captions.md`), T1–T3 and `report/methodology.md`. The draft holds findings, so
 it stays in `outputs/` until Checkpoint C; the owner reviews and edits it. Then one independent
 check of every number in the brief against its source, and Checkpoint C (ADR 0002, items 1–5).
+RQ3 answers with the composition share (`rq3.fit.composition_share.*`), with R² and slope as the
+association; regional levels are read as IP-located usage, beside the survey check.
 
 ## Open decisions
 
@@ -31,10 +37,12 @@ check of every number in the brief against its source, and Checkpoint C (ADR 000
 - [ ] Optional: ask Anthropic about the data licence (CC BY in the card text, MIT in its metadata)
       and whether April 2026 is a partial month; ask the Bank of Korea about reusing values from
       its figures (ADR 0007).
+- [ ] Optional: pin the 17-region generative-AI rates of the 2025 인터넷이용실태조사 (KOSIS; needs
+      the KOSIS key) to turn the survey check into a rank correlation over all regions.
 
 ## Choices
 
-One line each; choices that change results are ADRs 0001–0009.
+One line each; choices that change results are ADRs 0001–0010.
 
 - Data: the small pinned inputs are committed under `data/raw/`, the AEI files fetched (ADR 0007
   amendment); KOSIS keys are added at request time (`key_env: KOSIS_KEY`).
@@ -58,6 +66,10 @@ One line each; choices that change results are ADRs 0001–0009.
   placeholder and unused code paths were removed under the Proportionality rules.
 - Brief (owner, 2026-10-30): the rule that the owner drafts the narrative sections first is
   dropped; Claude may draft any section, and the owner reviews it.
+- Survey check (2026-11-02): the six values the MSIT release publishes (national rates, three
+  highest regions of each), transcribed like the Bank of Korea ranks; stability across snapshots
+  is reported as consistency, not as evidence of valid location. IP location itself is a stated
+  limitation, not analysed further (owner).
 
 ## Blockers
 
