@@ -37,6 +37,17 @@ DENOMINATOR_UNITS = {
     "workers": "index over the share of workers by workplace region (1 = parity)",
     "employed": "index over the share of employed persons by residence (1 = parity)",
 }
+_PER_WORKER = "log observed on log predicted work usage per worker"
+FIT_STATISTICS = {  # ADR 0010
+    "r2": (f"R^2, {_PER_WORKER}", "{:.2f}"),
+    "slope": (f"slope, {_PER_WORKER}", "{:.2f}"),
+    "composition_share": (
+        "percent of the variance of log observed work usage per worker that log predicted "
+        "accounts for, cov/var (the residual accounts for the rest)",
+        "{:.1f}%",
+    ),
+    "rho": ("Spearman's rho, observed and predicted work usage per worker", "{:.2f}"),
+}
 _PRODUCER = "korea_ai_exposure.national."
 _REGIONAL = "korea_ai_exposure.regional."
 _DECOMPOSITION = "korea_ai_exposure.decomposition."
@@ -360,9 +371,11 @@ def write(facts: list[dict], frames: dict[str, pd.DataFrame], population: pd.Ser
     robustness = decomposition.robustness(frames)
     robustness.to_csv(TABLES / "T3.csv", index=False, **csv)
     (TABLES / "T3.md").write_text(t3_markdown(robustness), encoding="utf-8", newline="\n")
-    korea = decomposition.korea(frames)
+    korea, us = decomposition.korea(frames), decomposition.us_states(frames)
     korea.to_csv(TABLES / "rq3_korea.csv", **csv)
-    decomposition.us_states(frames).to_csv(TABLES / "rq3_us_states.csv", **csv)
+    us.to_csv(TABLES / "rq3_us_states.csv", **csv)
+    fits = pd.DataFrame(decomposition.fits(korea, us)).T.rename_axis("area")
+    fits.astype({"n": int}).to_csv(TABLES / "rq3_fit.csv", **csv)
     decomposition.bok_comparison(korea).to_csv(TABLES / "rq4_bok.csv", index=False, **csv)
     crosswalk.coverage(frames).to_csv(TABLES / "rq3_coverage.csv", **csv)
     audit = crosswalk.audit(frames)
@@ -373,9 +386,9 @@ def write(facts: list[dict], frames: dict[str, pd.DataFrame], population: pd.Ser
 
 
 def composition_facts(frames: dict[str, pd.DataFrame]) -> list[dict]:
-    """RQ3 and RQ4 facts: each region's predicted work usage, residual and exposure (F9), the
-    Korean and US fits (F8, F9), crosswalk coverage, the Bank of Korea rank comparison, and the
-    robustness checks of T3."""
+    """RQ3 and RQ4 facts: each region's predicted work usage, residual, usages per worker and
+    exposure (F9), the Korean and US fits per worker (F8, F9; ADR 0010), crosswalk coverage, the
+    Bank of Korea rank comparison, and the robustness checks of T3."""
     facts = []
     headline, slug = national.HEADLINE, national.HEADLINE.period_start[:7]
     korea = decomposition.korea(frames)
@@ -401,6 +414,15 @@ def composition_facts(frames: dict[str, pd.DataFrame]) -> list[dict]:
             "observed over predicted work usage",
             usage_sources,
         )
+        for kind in ("observed", "predicted"):
+            value = row[f"{kind}_per_worker"]
+            add(
+                f"rq3.{kind}_per_worker.{name}.{slug}",
+                value,
+                f"{value:.2f}",
+                f"{kind} work usage per worker over the Korean average (1 = average)",
+                usage_sources,
+            )
     add = _adder(facts, "first half of 2026", f"{_DECOMPOSITION}korea")
     for code, row in korea.iterrows():
         name = _slug(regions.by_iso(code).name)
@@ -414,27 +436,19 @@ def composition_facts(frames: dict[str, pd.DataFrame]) -> list[dict]:
             )
 
     us = decomposition.us_states(frames)
-    add = _adder(facts, headline.label, f"{_DECOMPOSITION}fit")
-    for area, table, sources in (
-        ("korea", korea, usage_sources),
-        ("us", us, [headline.source, "US-OEWS-NAT", "US-OEWS-ST"]),
-    ):
-        result = decomposition.fit(table["observed_work"], table["predicted_work"])
+    us_sources = [headline.source, "US-OEWS-NAT", "US-OEWS-ST"]
+    add = _adder(facts, headline.label, f"{_DECOMPOSITION}fits")
+    for area, result in decomposition.fits(korea, us).items():
         n = result["n"]
-        add(
-            f"rq3.r2.{area}.{slug}",
-            result["r2"],
-            f"{result['r2']:.2f} (N = {n})",
-            "share of variance in log observed work usage accounted for by log predicted",
-            sources,
-        )
-        add(
-            f"rq3.rho.{area}.{slug}",
-            result["rho"],
-            f"{result['rho']:.2f} (N = {n})",
-            "Spearman's rho, observed and predicted work usage",
-            sources,
-        )
+        for statistic, (unit, form) in FIT_STATISTICS.items():
+            value = result[statistic]
+            add(
+                f"rq3.fit.{statistic}.{area}.{slug}",
+                value,
+                f"{form.format(value)} (N = {n})",
+                unit,
+                us_sources if area == "us" else usage_sources,
+            )
     for kind, value in (("min", us["coverage"].min()), ("max", us["coverage"].max())):
         add(
             f"rq3.us_coverage.{kind}.{slug}",

@@ -44,6 +44,8 @@ snapshot.
   predicted usage. AEI classifies conversation content; it does not observe users' occupations.
 - Usage is located by IP address and can be shifted toward Seoul; report it with the robustness
   checks (other denominators, ranks outside the capital region, stability across snapshots).
+- Rank, correlate or fit regions per capita or per worker, not on shares, which scale with size
+  (ADR 0010).
 - Seventeen regions is a small sample: report N, describe associations, use no causal language.
 - Compare within a release and flag every cross-release comparison; methods change between
   releases.

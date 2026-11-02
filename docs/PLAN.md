@@ -3,7 +3,7 @@
 - Project: korea-ai-exposure
 - Owner: Hyungbae Cho
 - Status: approved by the owner, 2026-10-29, and kept as that record. Later decisions supersede
-  it where they differ: ADRs 0003–0009 and `docs/PROJECT_STATUS.md`; current rules: `CLAUDE.md`.
+  it where they differ: ADRs 0003–0010 and `docs/PROJECT_STATUS.md`; current rules: `CLAUDE.md`.
 
 ## 1. Objective
 

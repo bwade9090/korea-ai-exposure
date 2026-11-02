@@ -127,25 +127,36 @@ usage, is reported beside them.
 **Decomposition.** A region's exposure is the employment-weighted mean exposure of its workers
 across occupation groups (first half of 2026). Predicted work usage is a region's share of
 Korean employment weighted by usage per worker; the residual is observed over predicted work
-usage. The share of the cross-regional variance in log observed work usage accounted for by log
-predicted usage (R²) and Spearman's rho are reported with N = 17. The same decomposition for the
-50 US states and the District of Columbia uses OEWS state employment by occupation, with no
-crosswalk, against each state's share of US work usage in May 2026; suppressed state cells are
-left out, and covered employment ranges from {rq3.us_coverage.min.2026-05} to
-{rq3.us_coverage.max.2026-05} by state.
+usage. Both shares grow with the region's employment, so regions are compared per worker
+(ADR 0010): each share is divided by the region's share of the employment behind the prediction.
+Predicted usage per worker is then the mean usage per worker of the region's occupations relative
+to the national mean, which reflects occupational composition alone, and with y and p the logs of
+observed and predicted usage per worker, y = p + log residual. The composition share,
+cov(y, p) / var(y), is the part of the cross-regional variance of y that composition accounts for
+at face value; the residual accounts for the rest. It is reported with the R² and slope of the
+regression of y on p (R² = slope × share; a slope above 1 means that regions differ more than
+their composition predicts) and Spearman's rho, for the 17 regions and for the 14 outside the
+capital region. The same decomposition for the 50 US states and the District of Columbia uses OEWS
+state employment by occupation, with no crosswalk, against each state's share of US work usage in
+May 2026; suppressed state cells are left out, and covered employment ranges from
+{rq3.us_coverage.min.2026-05} to {rq3.us_coverage.max.2026-05} by state. A fit on shares would
+mostly reflect size and is not comparable with these statistics; Anthropic's January 2026 fit
+across US states is per capita, the same basis, with a single occupation share as regressor.
 
 **Comparison with the Bank of Korea.** The Bank of Korea's issue note of 15 September 2026 ranks
 the regions by generative, agentic and physical AI exposure. Only its published rank orders are
 used. The project's exposure ranking draws on the same ILO source as the note's generative
 ranking but without the note's complementarity adjustment, whose details are not published, so
-the rank correlations compare measures; they do not replicate the note.
+the rank correlations compare measures; they do not replicate the note. The note's rank orders are
+compared with the project's exposure, the usage index and observed work usage per worker.
 
 **Robustness.** Each headline regional ranking is recomputed with the other occupation measures,
 with the minimum, maximum or first listed ISCO match in place of the mean (the first match is a
 mechanical stand-in for the one-to-one rules of the official table, which need judgment), with
-global usage shares, with the other denominators and with the other snapshots. Fixed in advance:
-a ranking whose Spearman's rho with the headline falls below 0.9 under any variant is reported
-as not robust (Table T3).
+global usage shares, with the other denominators and with the other snapshots. Usage rankings
+are compared per worker, since rankings of shares would agree through size alone. Fixed in
+advance: a ranking whose Spearman's rho with the headline falls below 0.9 under any variant is
+reported as not robust (Table T3).
 
 ## 8.5 Limitations
 
