@@ -23,12 +23,14 @@ COLORS = {  # Okabe and Ito (2008), colour-blind safe
     "grey": "#999999",
     "black": "#000000",
 }
-KOREA_COLOR = COLORS["vermillion"]
+KOREA_COLOR = COLORS["blue"]
+CONTRAST_COLOR = COLORS["orange"]  # beside KOREA_COLOR: below parity, negative gaps, the US
 STYLE = {
     "font.family": "DejaVu Sans",
     "font.size": 8,
     "axes.titlesize": 8.5,
-    "axes.titleweight": "bold",
+    "axes.titleweight": "normal",
+    "axes.titlecolor": "#333333",
     "axes.titlelocation": "left",
     "axes.spines.top": False,
     "axes.spines.right": False,
@@ -48,7 +50,7 @@ WAP = national.POPULATION_SOURCE
 
 def f1_series(series: pd.DataFrame) -> tuple[Figure, str]:
     """F1: Korea's share of global usage and AUI across the five snapshots, with rank."""
-    fig = Figure(figsize=(7.2, 3.0), layout="constrained")
+    fig = Figure(figsize=(7.2, 2.7), layout="constrained")
     share_ax, aui_ax = fig.subplots(1, 2)
     x = list(range(len(series)))
     share_ax.bar(x, series["share_pct"], width=0.6, color=KOREA_COLOR)
@@ -56,41 +58,29 @@ def f1_series(series: pd.DataFrame) -> tuple[Figure, str]:
         share_ax.annotate(f"{value:.2f}%", (xi, value), xytext=(0, 2), **_ANNOTATION)
     share_ax.set_ylim(0, series["share_pct"].max() * 1.25)
     share_ax.set_title("Share of global Claude.ai conversations (%)")
-    aui_ax.plot(x, series["aui"], color=KOREA_COLOR, marker="o", label="Headline basis")
-    aui_ax.plot(
-        x,
-        series["published_aui"],
-        linestyle="none",
-        marker="o",
-        markersize=8,
-        markerfacecolor="none",
-        markeredgecolor=COLORS["black"],
-        label="As published",
-    )
+    aui_ax.plot(x, series["aui"], color=KOREA_COLOR, marker="o")
     for xi, row in zip(x, series.itertuples(), strict=True):
         rank = national.rank_text(row.rank_min, row.rank_max, row.n)
         aui_ax.annotate(f"{row.aui:.2f}\nrank {rank}", (xi, row.aui), xytext=(0, 6), **_ANNOTATION)
     aui_ax.set_ylim(0, series["aui"].max() * 1.3)
-    aui_ax.set_title("AI Usage Index (AUI)")
-    aui_ax.legend(loc="lower left")
+    aui_ax.set_xlim(-0.6, len(series) - 0.4)
+    aui_ax.set_title("AI Usage Index (1 = in line with working-age population)")
     for ax in (share_ax, aui_ax):
         ax.set_xticks(x, list(series.index))
         ax.axvline(2.5, color=COLORS["grey"], linestyle="--", linewidth=0.8)
-    aui_ax.text(2.55, aui_ax.get_ylim()[1], "release 2026-06-26", va="top", fontsize=6.5)
     sources = ", ".join(dict.fromkeys(s.source for s in national.SNAPSHOTS))
     caption = (
         "Korea's share of global Claude.ai conversations and AI Usage Index (AUI), five "
         "snapshots: 4-11 August 2025, 13-20 November 2025, 5-12 February 2026, April 2026 and "
         "May 2026. Share: Anthropic's published usage_pct, the share of all sampled "
-        "conversations. AUI: share of usage over share of working-age (15-64) population. "
-        "Filled markers: the project's headline basis, both shares taken over the ranked "
-        "countries (at least 200 conversations, or published, in release 2026-06-26; "
-        "pseudo-geographies excluded); labels give the value and Korea's rank. Open markers: "
-        "the AUI as published, on each release's basis (August and November 2025: every row "
-        "above the floor in the usage total, unlocated conversations included; no value was "
-        "published for February 2026). The dashed line marks release 2026-06-26, whose "
-        "windows, sampling and classifiers differ, so changes across it mix method change with "
-        f"real change. Sources: {sources}; population: {WAP}."
+        "conversations. AUI: share of usage over share of working-age (15-64) population, both "
+        "taken over the ranked countries (at least 200 conversations, or published, in release "
+        "2026-06-26; pseudo-geographies excluded); labels give the value and Korea's rank. The "
+        "AUI published for August and November 2025 is on another basis (every row above the "
+        "floor in the usage total, unlocated conversations included); none was published for "
+        "February 2026. The dashed line marks release 2026-06-26, whose windows, sampling and "
+        "classifiers differ, so changes across it mix method change with real change. "
+        f"Sources: {sources}; population: {WAP}."
     )
     return fig, caption
 
@@ -163,7 +153,7 @@ def f4_gaps(soc: pd.DataFrame, requests: pd.DataFrame, top: int = 5) -> tuple[Fi
     soc_ax, request_ax = fig.subplots(1, 2, width_ratios=[1.15, 1])
     for ax, table in ((soc_ax, soc), (request_ax, requests)):
         y = list(range(len(table)))[::-1]
-        colors = [KOREA_COLOR if gap > 0 else COLORS["blue"] for gap in table["gap_pp"]]
+        colors = [KOREA_COLOR if gap > 0 else CONTRAST_COLOR for gap in table["gap_pp"]]
         ax.barh(y, table["gap_pp"], color=colors)
         ax.set_yticks(y, list(table["name"]))
         ax.axvline(0, color="black", linewidth=0.6)
@@ -208,8 +198,8 @@ def f5_index(tables: dict[str, pd.DataFrame]) -> tuple[Figure, str]:
         "conversations over its share of residents aged 15-64 at month end (resident "
         "registration, foreign residents excluded); 1 means parity. Bars: May 2026; markers: "
         "November 2025, February 2026 and April 2026. Usage is located by IP address, which can "
-        "shift it toward Seoul through commuting, gateways and VPNs; the headline denominator "
-        f"is chosen at Checkpoint B. N = 17. Sources: {sources}; {regional.SOURCES['population']}."
+        "shift it toward Seoul through commuting, gateways and VPNs. N = 17. Sources: "
+        f"{sources}; {regional.SOURCES['population']}."
     )
     return fig, caption
 
@@ -289,7 +279,7 @@ def f8_us(states: pd.DataFrame, fit: dict) -> tuple[Figure, str]:
     """F8: US states, observed against predicted work usage per worker."""
     fig = Figure(figsize=(5.6, 4.8), layout="constrained")
     ax = fig.subplots()
-    _observed_against_predicted(ax, states, fit, COLORS["blue"])
+    _observed_against_predicted(ax, states, fit, CONTRAST_COLOR)
     labels = (np.log(states["residual"]).abs()).nlargest(6).index
     for code in labels:
         row = states.loc[code]
@@ -318,10 +308,9 @@ def f8_us(states: pd.DataFrame, fit: dict) -> tuple[Figure, str]:
 
 
 def f9_korea(table: pd.DataFrame, fit: dict) -> tuple[Figure, str]:
-    """F9: Korea, observed against predicted work usage per worker, residuals, and exposure
-    rank."""
-    fig = Figure(figsize=(10.8, 4.0), layout="constrained")
-    scatter_ax, residual_ax, rank_ax = fig.subplots(1, 3, width_ratios=[1.1, 1, 1])
+    """F9: Korea, observed against predicted work usage per worker, and the residuals."""
+    fig = Figure(figsize=(7.4, 3.9), layout="constrained")
+    scatter_ax, residual_ax = fig.subplots(1, 2, width_ratios=[1.15, 1])
     _observed_against_predicted(scatter_ax, table, fit, KOREA_COLOR)
     for code, row in table.iterrows():
         *offset, align = _F9_OFFSETS.get(code, (3, 2, "left"))
@@ -337,43 +326,55 @@ def f9_korea(table: pd.DataFrame, fit: dict) -> tuple[Figure, str]:
     scatter_ax.set_ylabel("Observed per worker (1 = average; May 2026)")
     residual = table["residual"].sort_values()
     y = list(range(len(residual)))
-    colors = [KOREA_COLOR if r > 1 else COLORS["blue"] for r in residual]
+    colors = [KOREA_COLOR if r > 1 else CONTRAST_COLOR for r in residual]
     residual_ax.barh(y, np.log(residual), color=colors, height=0.6)
     residual_ax.set_yticks(y, [regions.by_iso(code).name for code in residual.index])
     ticks = [0.2, 0.5, 1, 2]
     residual_ax.set_xticks(np.log(ticks), [f"{t:g}" for t in ticks])
     residual_ax.axvline(0, color="black", linewidth=0.6)
     residual_ax.set_title("Observed over predicted (log scale)")
-    exposure_rank = table["ilo"].rank(ascending=False)
-    usage_rank = table["index_population"].rank(ascending=False)
-    rank_ax.scatter(exposure_rank, usage_rank, s=22, color=KOREA_COLOR, zorder=3)
-    for code in table.index:
-        rank_ax.annotate(
-            regions.by_iso(code).name,
-            (exposure_rank[code], usage_rank[code]),
-            xytext=(3, 2),
-            textcoords="offset points",
-            fontsize=6,
-        )
-    rank_ax.plot([1, 17], [1, 17], linestyle="--", color=COLORS["grey"], linewidth=0.8)
-    rank_ax.set_xlabel("Exposure rank (ILO WP140; 1 = highest)")
-    rank_ax.set_ylabel("Usage index rank (1 = highest)")
-    rank_ax.set_xticks([1, 5, 9, 13, 17])
-    rank_ax.set_yticks([1, 5, 9, 13, 17])
-    rank_ax.invert_xaxis()
-    rank_ax.invert_yaxis()
     caption = (
         "Korea's 17 regions, May 2026. Left: observed work-related Claude.ai usage per worker "
         "(the region's share of Korean work usage, M4, over its share of employment) against "
         "usage per worker predicted by occupational composition (지역별고용조사 employment by "
         "KSCO-8 sub-major group, first half of 2026, times US usage per worker mapped SOC 2018 "
         "to SOC 2010 to ISCO-08 to KSCO-8, M5a); 1 = the Korean average; log scales, dashed "
-        "line: equality; R^2, slope and composition share as in F8. Centre: residual, observed "
-        "over predicted, log scale. Right: rank of "
-        "occupation-weighted exposure (ILO WP140, M6) against rank of the usage index (residents "
-        f"aged 15-64). N = {fit['n']}; associations, not effects; IP-based location can shift "
-        f"usage toward Seoul. Sources: {national.HEADLINE.source}; KR-OCC, KR-OCC-NAT, KR-POP; "
-        "US-OEWS-NAT; XW-SOC1018, XW-ISCO-SOC, XW-KSCO-ISCO; ILO-WP140."
+        "line: equality; R^2, slope and composition share as in F8. Right: residual, observed "
+        f"over predicted, log scale. N = {fit['n']}; associations, not effects; IP-based "
+        f"location can shift usage toward Seoul. Sources: {national.HEADLINE.source}; KR-OCC, "
+        "KR-OCC-NAT; US-OEWS-NAT; XW-SOC1018, XW-ISCO-SOC, XW-KSCO-ISCO."
+    )
+    return fig, caption
+
+
+def f10_exposure(table: pd.DataFrame, rho: float) -> tuple[Figure, str]:
+    """F10: Korea, rank of occupation-weighted exposure against rank of the usage index."""
+    exposure_rank = table["ilo"].rank(ascending=False)
+    usage_rank = table["index_population"].rank(ascending=False)
+    fig = Figure(figsize=(4.6, 4.0), layout="constrained")
+    ax = fig.subplots()
+    ax.scatter(exposure_rank, usage_rank, s=22, color=KOREA_COLOR, zorder=3)
+    for code in table.index:
+        ax.annotate(
+            regions.by_iso(code).name,
+            (exposure_rank[code], usage_rank[code]),
+            xytext=(3, 2),
+            textcoords="offset points",
+            fontsize=6.5,
+        )
+    ax.plot([1, 17], [1, 17], linestyle="--", color=COLORS["grey"], linewidth=0.8)
+    ax.set_xlabel("Rank of exposure to generative AI (1 = most exposed)")
+    ax.set_ylabel("Rank of the usage index (1 = highest)")
+    ax.set_xticks([1, 5, 9, 13, 17])
+    ax.set_yticks([1, 5, 9, 13, 17])
+    ax.invert_xaxis()
+    ax.invert_yaxis()
+    caption = (
+        "Korea's 17 regions: rank of occupation-weighted exposure (ILO WP140 scores, "
+        "지역별고용조사 employment by KSCO-8 sub-major group, first half of 2026, M6) against "
+        "rank of the usage index (May 2026, residents aged 15-64, M3); dashed line: equal "
+        f"ranks. Spearman's rho = {rho:.2f} (N = {len(table)}); an association, not an effect. "
+        f"Sources: {national.HEADLINE.source}; KR-OCC, KR-POP; XW-KSCO-ISCO; ILO-WP140."
     )
     return fig, caption
 
@@ -394,8 +395,8 @@ def _observed_against_predicted(ax, table: pd.DataFrame, fit: dict, color: str) 
     low, high = max(x.min(), y.min()) / 1.15, min(x.max(), y.max()) * 1.15
     ax.plot([low, high], [low, high], linestyle="--", color=COLORS["grey"], linewidth=0.8)
     ax.set_title(
-        f"R^2 = {fit['r2']:.2f}, slope = {fit['slope']:.2f}, composition share = "
-        f"{fit['composition_share']:.0f}%, N = {fit['n']}",
+        f"Composition share {fit['composition_share']:.1f}%, R² = {fit['r2']:.2f}, "
+        f"slope = {fit['slope']:.2f}, N = {fit['n']}",
         fontsize=8,
     )
 
@@ -466,6 +467,9 @@ def main() -> int:
         ),
         "F8": lambda: f8_us(us, fits["us"]),
         "F9": lambda: f9_korea(korea, fits["korea"]),
+        "F10": lambda: f10_exposure(
+            korea, decomposition.exposure_against_usage(korea)["index_population"]
+        ),
     }
     FIGURES.mkdir(parents=True, exist_ok=True)
     captions = []
