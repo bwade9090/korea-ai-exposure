@@ -1,10 +1,12 @@
 # korea-ai-exposure
 
 Where AI is used, and where AI-exposed work sits, across Korea's 17 metropolitan cities and
-provinces. Measured from public data: the Anthropic Economic Index, Anthropic's occupation-level
-exposure data, and Korean official statistics.
+provinces. Measured from public data: the Anthropic Economic Index, occupational exposure scores
+(ILO; Anthropic), and Korean official statistics.
 
-**Status:** work in progress; results are released after review.
+**Brief:** *Regional Patterns of Generative AI Use in Korea: Evidence from Claude Conversation
+Data* (November 2026) — [PDF](report/brief.pdf), [Word](report/brief.docx). Detailed methods:
+[`report/methodology.md`](report/methodology.md).
 
 ## Questions
 
@@ -17,6 +19,9 @@ exposure data, and Korean official statistics.
 
 `make all` regenerates every figure and number from pinned public sources. Small inputs are
 stored in `data/raw/`; the large Anthropic Economic Index files are downloaded by `make fetch`.
+Every number in the brief is a fact in [`outputs/facts.json`](outputs/facts.json), with its unit,
+period and sources; `python -m korea_ai_exposure.brief` rebuilds `report/brief.docx` from the
+facts and figures, and the PDF is exported from Word.
 
 - Sources, versions, and licenses: [`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md)
 - Plan: [`docs/PLAN.md`](docs/PLAN.md)
@@ -40,6 +45,7 @@ committed. See [`data/README.md`](data/README.md) for how downloads are pinned.
 
 ## Attribution and disclaimer
 
-This project uses data from the Anthropic Economic Index (Anthropic; CC-BY). It is an independent
-project, not affiliated with or endorsed by Anthropic. Further disclaimers will be finalized before
-publication; see [ADR 0002](docs/decisions/0002-employer-and-publication-review.md).
+This project uses data from the Anthropic Economic Index (Anthropic; CC-BY) and the other public
+sources listed, with their licences, in [`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md). It is
+independent research, not affiliated with or endorsed by Anthropic, the Bank of Korea or any other
+institution; the views are the author's own.

@@ -1,8 +1,7 @@
 # 8. Methodology and limitations
 
-Draft for the brief (PLAN §9, section 8), written from the code. It states methods only. Values
-in braces are fact IDs in `outputs/facts.json`; replace each with the fact's `display` value. The
-final check compares every number in the brief with its source.
+The detailed methods behind the brief (`report/brief.docx`, whose annex summarizes them), written
+from the code. It states methods only; values in braces are fact IDs in `outputs/facts.json`.
 
 ## 8.1 Data
 

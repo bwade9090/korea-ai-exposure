@@ -34,8 +34,8 @@ snapshot.
 - Ask the owner before publishing anything or changing repository visibility, passing
   Checkpoint C, any paid API call, or downloads that need the owner's login (they go to
   `data/manual/`).
-- Until Checkpoint C (ADR 0002), findings stay out of tracked files: results live in `outputs/`,
-  which is gitignored.
+- Checkpoint C was approved on 2026-11-02 (ADR 0002): the brief is published in `report/` and
+  `outputs/` is tracked, except the working copies in `outputs/brief/`. Every push publishes.
 
 ## Evidence rules
 
@@ -76,6 +76,7 @@ snapshot.
 | `make replicate` | replication of published values (`docs/replication.md`) |
 | `make figures`, `make facts` | figures, tables and `outputs/facts.json` (after `make build`) |
 | `make all` | build, figures and facts |
+| `python -m korea_ai_exposure.brief` | `report/brief.docx` from `outputs/facts.json` and the figures; the PDF is exported from Word |
 
 Make needs a POSIX shell (Git Bash on Windows); without make, run the recipes with
 `.venv/Scripts/python -m ...`. CI runs `make check` on Linux.

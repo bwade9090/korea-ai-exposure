@@ -1,7 +1,8 @@
 # ADR 0002 — Employer and publication review
 
-- Status: proposed, 2026-10-29; amended 2026-10-29 (repository visibility, below). The review in
-  items 1–5 is still pending and is required before any public release of findings.
+- Status: accepted, 2026-11-02: the owner confirmed in session that the review in items 1–5 is
+  complete and approved publication (Checkpoint C; outcome below). Proposed 2026-10-29; amended
+  2026-10-29 (repository visibility, below).
 - Decider: Hyungbae Cho
 
 ## Context
@@ -35,3 +36,10 @@ public. Consequences:
   data, no secrets) therefore apply to every commit, not only to releases.
 - Items 1–5 still apply before the brief, its findings, or its figures are released, presented,
   or promoted (Checkpoint C).
+
+## Outcome — 2026-11-02: Checkpoint C
+
+The owner approved the draft of the brief and confirmed that items 1–5 are complete. The brief is
+published in `report/` (`brief.docx`, built from `outputs/facts.json`, and `brief.pdf`, exported
+from Word), with the disclaimers of item 3 on its cover and in the README; the README does not
+name the employer. From this date the results in `outputs/` are tracked.

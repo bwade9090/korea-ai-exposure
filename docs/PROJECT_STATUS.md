@@ -4,36 +4,37 @@ Last updated: 2026-11-02
 
 ## Current state
 
-- Phases 0–5 are complete; Checkpoints A and B are approved (below). `make build`, `make figures`
-  and `make facts` run from 24 pinned inputs; the results (F1–F9, T1–T3, `outputs/facts.json`)
-  stay in `outputs/`, untracked until Checkpoint C. Replication of published values:
-  `docs/replication.md`. Methodology draft: `report/methodology.md`.
+- Phases 0–6 are complete; Checkpoints A, B and C are approved (below). `make build`,
+  `make figures` and `make facts` run from 24 pinned inputs; the results (F1–F10, T1–T3,
+  `outputs/facts.json`) are tracked since Checkpoint C. Replication of published values:
+  `docs/replication.md`. Detailed methods: `report/methodology.md`.
 - External review (2026-11-02), applied before the brief: RQ3–RQ4 compare regions per worker, not
   on shares, which scale with size (ADR 0010: the RQ3 fit, the T3 usage rows, the Bank of Korea
   comparison, F8–F9); the regional pattern is set beside the 2025 인터넷이용실태조사
   (`regional.survey_check`, MSIT-NIA-2026).
-- **Phase 6 — brief: first draft written** (2026-11-02): `outputs/brief/brief.docx`, a Word
-  document in the form of a central-bank policy note (summary, six sections, six figures, one
-  table, annex). Every number is resolved from `outputs/facts.json` by the generator in
-  `outputs/brief/source/`; both stay untracked until Checkpoint C. Word renders it in nine pages
-  (`outputs/brief/brief.pdf`, exported from Word); exhibits follow the paragraphs that cite them
-  so that pages fill before an exhibit moves on.
-- The repository is public (ADR 0002 amendment), so every push publishes.
+- **Brief published** (2026-11-02): `report/brief.docx`, a Word document in the form of a
+  central-bank policy note (summary, six sections, six figures, one table, annex), built by
+  `python -m korea_ai_exposure.brief` from `brief_text` with every number resolved from
+  `outputs/facts.json`; `report/brief.pdf` is its nine-page rendering, exported from Word.
+  One independent check (2026-11-02) matched every number in the brief to `outputs/facts.json`
+  and the survey values to the MSIT release; its finding (an incomplete list in paragraph 15) and
+  three wording points were fixed before publication.
+- The repository is public (ADR 0002 amendment), so every push publishes; after Checkpoint C it
+  is a frozen snapshot.
 
 ## Next action
 
-The owner reviews and edits `outputs/brief/brief.docx` in Word (layout, wording, the author line
-and disclaimer). Then one independent check of every number in the brief against
-`outputs/facts.json`, and Checkpoint C (ADR 0002, items 1–5).
+None: the study is complete. Optional, at the owner's choice: a licence for the code and the brief
+(none is set), and the backlog in `docs/PLAN.md` §13.
 
 ## Open decisions
 
-- Checkpoint C: publication, after the ADR 0002 review.
+- Licence (owner's choice; none set).
 
 ## Owner actions
 
 - [ ] Rotate the KOSIS OpenAPI key: it appeared once in a local session log (no file, no commit).
-- [ ] ADR 0002 review before any public release of findings.
+- [x] ADR 0002 review before any public release of findings (owner, 2026-11-02).
 - [ ] Optional: install CPython 3.12 next to 3.13 (`winget install Python.Python.3.12`) and run
       `make setup`, to rebuild outside the Claude app (GNU Make: `C:\rtools45\usr\bin\make.exe`).
 - [ ] Optional: ask Anthropic about the data licence (CC BY in the card text, MIT in its metadata)
@@ -73,6 +74,8 @@ One line each; choices that change results are ADRs 0001–0010.
   history are left out. Figures use Okabe-Ito blue with orange for contrast; F9 is split into F9
   (composition) and F10 (exposure against usage ranks), and RQ4 gains the rho of ILO exposure
   with usage and each region's two ranks (`rq4.rho.*`, `rq4.rank.*`).
+- Release (2026-11-02): python-docx joins the lock to build the brief; `outputs/` is committed
+  after Checkpoint C, except the working copies in `outputs/brief/`.
 - Survey check (2026-11-02): the six values the MSIT release publishes (national rates, three
   highest regions of each), transcribed like the Bank of Korea ranks; stability across snapshots
   is reported as consistency, not as evidence of valid location. IP location itself is a stated
@@ -90,7 +93,7 @@ None.
 | Visibility | Repository public or private (ADR 0002) | Decided | 2026-10-29 | Owner: keep the repository public |
 | A | Sources, regional occupation tier, denominators, peer sets | Approved | 2026-10-30 | Owner: approve A1–A8 as recommended; ADRs 0003–0007 accepted; `outputs/` untracked until Checkpoint C |
 | B | Regional measurement validity; headline denominator | Approved | 2026-10-30 | Owner: approve B1 and B2 as recommended; ADR 0008 accepted |
-| C | Publication | Pending | | |
+| C | Publication | Approved | 2026-11-02 | Owner, in session: approve the draft; ADR 0002 items 1–5 complete; publish the brief and the code |
 
 ## Checkpoint B — decisions (owner, 2026-10-30)
 
