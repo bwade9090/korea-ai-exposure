@@ -10,6 +10,9 @@ xlrd
 # Figures
 matplotlib
 
+# The brief as a Word document
+python-docx
+
 # Configuration
 python-dotenv
 
