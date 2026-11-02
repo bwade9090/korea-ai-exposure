@@ -37,6 +37,7 @@ data/raw/*
 data/manual/
 data/interim/
 
-# Results (figures, result tables, facts) stay untracked until Checkpoint C: the repository is
-# public, and findings are released only after the ADR 0002 review (Checkpoint A, decision A7).
-outputs/
+# Results (figures, result tables, facts) were untracked until Checkpoint C (ADR 0002; decision A7)
+# and are committed since its approval on 2026-11-02. outputs/brief/ holds working copies of the
+# brief, which is published in report/.
+outputs/brief/

@@ -1,0 +1,19 @@
+ranking,variant,rho,robust
+predicted work usage per worker (v),intensity: observed,0.6201,False
+predicted work usage per worker (v),intensity: ilo,0.5319,False
+exposure (ILO),exposure: observed,0.9265,True
+predicted work usage per worker (v),weighting: min,0.8578,False
+exposure (ILO),weighting: min,0.9975,True
+predicted work usage per worker (v),weighting: max,0.9387,True
+exposure (ILO),weighting: max,0.9951,True
+predicted work usage per worker (v),weighting: first,0.9412,True
+exposure (ILO),weighting: first,0.9975,True
+predicted work usage per worker (v),v from global shares,0.9289,True
+usage index (residents 15-64),denominator: workers,0.9828,True
+usage index (residents 15-64),denominator: employed,0.9804,True
+usage index (residents 15-64),snapshot: Nov 2025,0.9730,True
+observed work usage per worker,snapshot: Nov 2025,0.9828,True
+usage index (residents 15-64),snapshot: Feb 2026,0.9706,True
+observed work usage per worker,snapshot: Feb 2026,0.9828,True
+usage index (residents 15-64),snapshot: Apr 2026,0.9853,True
+observed work usage per worker,snapshot: Apr 2026,0.9975,True

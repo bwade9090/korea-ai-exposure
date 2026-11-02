@@ -1,0 +1,13 @@
+bok,project,rho,n
+generative,ilo,0.9779,17
+generative,observed,0.9240,17
+generative,index_population,0.8897,17
+generative,observed_per_worker,0.9265,17
+agentic,ilo,0.9461,17
+agentic,observed,0.9681,17
+agentic,index_population,0.8627,17
+agentic,observed_per_worker,0.8775,17
+physical,ilo,-0.9118,17
+physical,observed,-0.9902,17
+physical,index_population,-0.8824,17
+physical,observed_per_worker,-0.8946,17

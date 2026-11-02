@@ -1,0 +1,6 @@
+snapshot,share_pct,share_rank_min,share_rank_max,share_n,aui,rank_min,rank_max,n,published_basis,published_aui,published_rank_min,published_rank_max,published_n
+Aug 2025,3.6584,5,5,115,4.4203,5,5,115,anthropic_2025,3.7255,5,5,115
+Nov 2025,3.0622,5,5,116,3.8187,7,7,116,anthropic_2025,3.1228,7,7,116
+Feb 2026,2.9075,7,7,116,3.6915,12,12,116,,,,,
+Apr 2026,3.1900,6,6,114,3.9200,9,10,114,renormalized,3.9200,9,10,114
+May 2026,3.2400,7,7,121,3.7800,14,14,121,renormalized,3.7800,14,14,121
