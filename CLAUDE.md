@@ -43,7 +43,8 @@ snapshot.
 - Label each measure as usage (observed conversations), exposure (an occupation-level measure) or
   predicted usage. AEI classifies conversation content; it does not observe users' occupations.
 - Usage is located by IP address and can be shifted toward Seoul; report it with the robustness
-  checks (other denominators, ranks outside the capital region, stability across snapshots).
+  checks (other denominators, ranks outside the capital region, stability across snapshots) and
+  the survey check. Stability shows consistency, not validity.
 - Rank, correlate or fit regions per capita or per worker, not on shares, which scale with size
   (ADR 0010).
 - Seventeen regions is a small sample: report N, describe associations, use no causal language.

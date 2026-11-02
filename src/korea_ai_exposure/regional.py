@@ -49,6 +49,15 @@ REGION_CODES = tuple(region.iso for region in regions.REGIONS)
 FACET_METRICS = tuple(metric for metric in national.METRICS if metric != "top_100_tasks")
 Z95 = 1.959964
 DENOMINATORS_CSV = paths.PROCESSED / "denominators.csv"
+# 과학기술정보통신부·한국지능정보사회진흥원, 2025 인터넷이용실태조사, press release of 31 March
+# 2026 (MSIT-NIA-2026): generative-AI experience and paid-subscription rates, percent of internet
+# users aged 12 and over, nationally and in the three highest regions; the release publishes no
+# other regional values. A household survey of residents: an external check on the IP-located
+# regional pattern. It counts any generative-AI service, not Claude conversations.
+SURVEY = {
+    "experience": {"national": 44.5, "KR-50": 53.2, "KR-30": 53.1, "KR-11": 52.8},
+    "paid": {"national": 7.9, "KR-11": 11.4, "KR-41": 9.9, "KR-42": 9.1},
+}
 _NATIONAL = {"admin": "00", "survey": "00", "survey4": "0000", "moel": "000000"}
 
 
@@ -267,6 +276,24 @@ def grdp_association(table: pd.DataFrame) -> dict[str, float]:
     """PLAN 4.6: Spearman's rho between the population-based index and GRDP per capita, N = 17."""
     grdp = grdp_per_capita()
     return {"rho": spearman(table["index_population"], grdp), "n": len(table)}
+
+
+def survey_check(table: pd.DataFrame) -> pd.DataFrame:
+    """The survey's published regional rates (MSIT-NIA-2026), each over the national rate
+    (1 = the national rate), beside the region's population-based index in ``table``."""
+    rows = [
+        {
+            "measure": measure,
+            "region": code,
+            "rate": rate,
+            "relative": rate / rates["national"],
+            "index_population": table.loc[code, "index_population"],
+        }
+        for measure, rates in SURVEY.items()
+        for code, rate in rates.items()
+        if code != "national"
+    ]
+    return pd.DataFrame(rows)
 
 
 def _korean(values: pd.Series) -> pd.Series:

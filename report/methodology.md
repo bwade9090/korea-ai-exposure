@@ -99,7 +99,17 @@ rank correlation of the index between snapshots, with regions whose usage share 
 than a third between consecutive snapshots flagged. The capital region (Seoul, Gyeonggi,
 Incheon) is compared with the other 14 regions, and regions are also ranked outside the capital
 region. Regional profiles use only the metrics published for all 17 regions. The association
-with GRDP per capita is Spearman's rho.
+with GRDP per capita is Spearman's rho. Stability shows that the pattern is consistent; a
+location bias that is itself stable would give the same result, so it is no evidence of validity.
+
+**External check.** The 2025 Internet Usage Survey (인터넷이용실태조사, Ministry of Science and
+ICT and National Information Society Agency), a household survey that locates people by residence,
+publishes the national rates of generative-AI experience and of paid subscription among internet
+users aged 12 and over, and the three regions with the highest rates; it publishes no other
+regional values in its release. Each published regional rate is divided by the national rate and
+set beside the region's usage index. The survey counts any use of any generative-AI service,
+mostly ChatGPT, not the volume of Claude conversations, so it checks the direction and spread of
+the regional pattern, not its level.
 
 ## 8.4 Composition and exposure (RQ3–RQ4)
 
@@ -162,8 +172,11 @@ reported as not robust (Table T3).
 
 - **Location.** Usage is located by IP address. Commuting, mobile and corporate network
   gateways and VPNs can shift measured usage toward Seoul; the effect cannot be measured with
-  public data. The workplace-based index and the rankings outside the capital region are
-  reported for this reason.
+  public data, and stability across snapshots does not rule it out. Regional levels are levels of
+  IP-located usage, read with the survey check (8.3), and the residual of the decomposition mixes
+  differences in adoption with location error. The workplace-based index, the rankings outside
+  the capital region and the decomposition outside the capital region are reported for this
+  reason.
 - **Small N.** Seventeen regions is a small sample. Every cross-regional statistic is reported
   with N and describes an association, not an effect.
 - **Method changes.** Releases differ in sampling windows, classifiers, taxonomies and trait

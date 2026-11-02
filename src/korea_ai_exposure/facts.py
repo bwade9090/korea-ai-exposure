@@ -37,6 +37,10 @@ DENOMINATOR_UNITS = {
     "workers": "index over the share of workers by workplace region (1 = parity)",
     "employed": "index over the share of employed persons by residence (1 = parity)",
 }
+SURVEY_UNITS = {
+    "experience": "percent of internet users aged 12 and over who have used generative AI",
+    "paid": "percent of internet users aged 12 and over who pay for generative AI",
+}
 _PER_WORKER = "log observed on log predicted work usage per worker"
 FIT_STATISTICS = {  # ADR 0010
     "r2": (f"R^2, {_PER_WORKER}", "{:.2f}"),
@@ -199,7 +203,8 @@ def regional_facts(frames: dict[str, pd.DataFrame]) -> list[dict]:
     """RQ2 facts: each region's usage share and population-based index in every regional
     snapshot (F5); its other indices, work-usage share and commuting ratio in May 2026 (T2); the
     capital region's shares (F6); stability; ranks outside the capital region; the GRDP
-    association (F7); and the range of the regional facets in May 2026."""
+    association (F7); the survey's published regional rates; and the range of the regional
+    facets in May 2026."""
     facts = []
     tables = regional.regional_tables(frames)
     headline = regional.HEADLINE
@@ -306,6 +311,33 @@ def regional_facts(frames: dict[str, pd.DataFrame]) -> list[dict]:
         [headline.source, regional.SOURCES["population"], regional.SOURCES["grdp"]],
     )
 
+    add = _adder(facts, "2025 survey", f"{_REGIONAL}survey_check")
+    for measure, rates in regional.SURVEY.items():
+        rate = rates["national"]
+        add(
+            f"rq2.survey.{measure}.national.2025",
+            rate,
+            f"{rate:.1f}%",
+            SURVEY_UNITS[measure],
+            ["MSIT-NIA-2026"],
+        )
+    for row in regional.survey_check(latest_table).itertuples():
+        name = _slug(regions.by_iso(row.region).name)
+        add(
+            f"rq2.survey.{row.measure}.{name}.2025",
+            row.rate,
+            f"{row.rate:.1f}%",
+            SURVEY_UNITS[row.measure],
+            ["MSIT-NIA-2026"],
+        )
+        add(
+            f"rq2.survey_relative.{row.measure}.{name}.2025",
+            row.relative,
+            f"{row.relative:.2f}",
+            "survey rate over the national rate (1 = the national rate)",
+            ["MSIT-NIA-2026"],
+        )
+
     facets = regional.facets(frames[headline.label]).loc[list(regional.REGION_CODES)]
     add = _adder(facts, headline.label, f"{_REGIONAL}facets")
     for metric in facets.columns:
@@ -368,6 +400,7 @@ def write(facts: list[dict], frames: dict[str, pd.DataFrame], population: pd.Ser
         TABLES / "T2_facets.csv", float_format="%.4f", lineterminator="\n"
     )
     csv = {"float_format": "%.4f", "lineterminator": "\n"}
+    regional.survey_check(latest).to_csv(TABLES / "rq2_survey.csv", index=False, **csv)
     robustness = decomposition.robustness(frames)
     robustness.to_csv(TABLES / "T3.csv", index=False, **csv)
     (TABLES / "T3.md").write_text(t3_markdown(robustness), encoding="utf-8", newline="\n")

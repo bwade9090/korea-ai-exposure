@@ -108,6 +108,16 @@ def test_work_usage_falls_back_to_all_conversations_when_a_use_case_is_unpublish
     assert set(table["work_basis"]) == {"all conversations"}
 
 
+def test_survey_check_relates_each_published_rate_to_the_national_rate():
+    for rates in regional.SURVEY.values():
+        assert set(rates) - {"national"} <= set(regional.REGION_CODES)
+    table = pd.DataFrame({"index_population": 1.0}, index=list(regional.REGION_CODES))
+    check = regional.survey_check(table).set_index(["measure", "region"])
+    assert check.loc[("experience", "KR-11"), "relative"] == pytest.approx(52.8 / 44.5)
+    assert check.loc[("paid", "KR-41"), "relative"] == pytest.approx(9.9 / 7.9)
+    assert len(check) == 6
+
+
 def test_spearman_uses_average_ranks():
     assert regional.spearman(pd.Series([1, 2, 3]), pd.Series([10, 20, 30])) == pytest.approx(1)
     assert regional.spearman(pd.Series([1, 2, 3]), pd.Series([3, 2, 1])) == pytest.approx(-1)

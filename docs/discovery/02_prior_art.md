@@ -110,7 +110,7 @@ analysis. No Anthropic Korea brief existed on 2026-10-29, but one is plausible.
 | Murugan, Aguirre, Nagaraj and Bommasani, arXiv:2607.05404, June 2026 | Validates national exposure measures against country adoption statistics from Anthropic, Microsoft and OpenAI | Usage versus exposure at national level (RQ4) |
 | paullabkorea (이호준), Anthropic Economic Index 분석 리포트, March 2026 | Korean-language national deep dive (November 2025 data) | National only |
 | 이으뜸·문아람, 지역별 AI 준비도, KISDI Premium Report 25-12, December 2025 | AI readiness of 229 시군구 | Index based; seen through citations and press only |
-| 과학기술정보통신부·한국지능정보사회진흥원, 2025 인터넷이용실태조사, 2026-03-31 | Generative-AI experience by 시도 (survey) | A possible check on IP-based regional usage (Checkpoint B); primary tables not yet verified |
+| 과학기술정보통신부·한국지능정보사회진흥원, 2025 인터넷이용실태조사, 2026-03-31 | Generative-AI experience and paid subscription, nationally and by 시도 (household survey) | External check on IP-based regional usage (`regional.survey_check`, 2026-11-02). The release names only the three highest regions of each rate; the full 시도 table is not verified. Press reports of other regions' rates (from a National Assembly office) do not cite the primary table and are not used |
 
 No published analysis of the Korean regional AEI usage data was found (searches in Korean and
 English, arXiv, GitHub and the Anthropic site, 2026-10-29). Absence cannot be proven; it
