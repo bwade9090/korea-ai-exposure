@@ -12,17 +12,19 @@ Last updated: 2026-11-02
   on shares, which scale with size (ADR 0010: the RQ3 fit, the T3 usage rows, the Bank of Korea
   comparison, F8–F9); the regional pattern is set beside the 2025 인터넷이용실태조사
   (`regional.survey_check`, MSIT-NIA-2026).
-- **Phase 6 — brief: in progress.**
+- **Phase 6 — brief: first draft written** (2026-11-02): `outputs/brief/brief.docx`, a Word
+  document in the form of a central-bank policy note (summary, six sections, six figures, one
+  table, annex). Every number is resolved from `outputs/facts.json` by the generator in
+  `outputs/brief/source/`; both stay untracked until Checkpoint C. Word renders it in nine pages
+  (`outputs/brief/brief.pdf`, exported from Word); exhibits follow the paragraphs that cite them
+  so that pages fill before an exhibit moves on.
 - The repository is public (ADR 0002 amendment), so every push publishes.
 
 ## Next action
 
-Draft the brief, every section, from `outputs/facts.json`, the figures (captions in
-`outputs/figures/captions.md`), T1–T3 and `report/methodology.md`. The draft holds findings, so
-it stays in `outputs/` until Checkpoint C; the owner reviews and edits it. Then one independent
-check of every number in the brief against its source, and Checkpoint C (ADR 0002, items 1–5).
-RQ3 answers with the composition share (`rq3.fit.composition_share.*`), with R² and slope as the
-association; regional levels are read as IP-located usage, beside the survey check.
+The owner reviews and edits `outputs/brief/brief.docx` in Word (layout, wording, the author line
+and disclaimer). Then one independent check of every number in the brief against
+`outputs/facts.json`, and Checkpoint C (ADR 0002, items 1–5).
 
 ## Open decisions
 
@@ -66,6 +68,11 @@ One line each; choices that change results are ADRs 0001–0010.
   placeholder and unused code paths were removed under the Proportionality rules.
 - Brief (owner, 2026-10-30): the rule that the owner drafts the narrative sections first is
   dropped; Claude may draft any section, and the owner reviews it.
+- Brief (owner, 2026-11-02): written for policy readers in plain English, in Word, with the feel
+  of a central-bank note but no institution's branding; software, internal labels and research
+  history are left out. Figures use Okabe-Ito blue with orange for contrast; F9 is split into F9
+  (composition) and F10 (exposure against usage ranks), and RQ4 gains the rho of ILO exposure
+  with usage and each region's two ranks (`rq4.rho.*`, `rq4.rank.*`).
 - Survey check (2026-11-02): the six values the MSIT release publishes (national rates, three
   highest regions of each), transcribed like the Bank of Korea ranks; stability across snapshots
   is reported as consistency, not as evidence of valid location. IP location itself is a stated
