@@ -221,6 +221,15 @@ def bok_comparison(table: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def exposure_against_usage(table: pd.DataFrame) -> dict[str, float]:
+    """Phase 5.5: Spearman's rho (N = 17) between the project's exposure ranking (ILO, ADR 0009)
+    and the usage index (M3) and observed work usage per worker."""
+    return {
+        column: regional.spearman(table[HEADLINE_EXPOSURE], table[column])
+        for column in ("index_population", "observed_per_worker")
+    }
+
+
 def robustness(frames: dict[str, pd.DataFrame]) -> pd.DataFrame:
     """Phase 5.6 (T3): Spearman's rho between each headline regional ranking and its variants:
     the intensity (v, x, ILO), the KSCO weighting rule (minimum, maximum, first link), global

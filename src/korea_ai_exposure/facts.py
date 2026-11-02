@@ -513,6 +513,26 @@ def composition_facts(frames: dict[str, pd.DataFrame]) -> list[dict]:
             ["BOK-2026-09", headline.source, "KR-OCC", "ILO-WP140"],
         )
 
+    add = _adder(facts, headline.label, f"{_DECOMPOSITION}exposure_against_usage")
+    rank_sources = [headline.source, "KR-OCC", "KR-POP", "XW-KSCO-ISCO", "ILO-WP140"]
+    for column, rho in decomposition.exposure_against_usage(korea).items():
+        add(
+            f"rq4.rho.ilo.{column}",
+            rho,
+            f"{rho:.2f} (N = {len(korea)})",
+            "Spearman's rho, ILO exposure and the usage ranking",
+            rank_sources,
+        )
+    for kind, column in (("exposure", "ilo"), ("usage_index", "index_population")):
+        for code, rank in korea[column].rank(ascending=False, method="min").items():
+            add(
+                f"rq4.rank.{kind}.{_slug(regions.by_iso(code).name)}",
+                int(rank),
+                f"{int(rank)} of {len(korea)}",
+                f"rank of the region's {kind.replace('_', ' ')} (1 = highest)",
+                rank_sources,
+            )
+
     add = _adder(facts, headline.label, f"{_DECOMPOSITION}robustness")
     for row in decomposition.robustness(frames).itertuples():
         add(
